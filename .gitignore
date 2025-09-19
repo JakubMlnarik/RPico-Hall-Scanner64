@@ -1,0 +1,4 @@
+# Ignore everything in build/
+build/*
+# But do not ignore .uf2 files
+!build/*.uf2
