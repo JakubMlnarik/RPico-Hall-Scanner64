@@ -37,11 +37,15 @@ int main() {
     gpio_put(PIN_CS, 1);
 
     while (true) {
+        uint32_t start = time_us_32();
         for (uint8_t ch = 0; ch < 8; ch++) {
             uint16_t value = read_adc(ch);
             float voltage = value * 3.3f / 4095.0f;
             printf("CH%u: %u (%.2f V)\n", ch, value, voltage);
         }
+        uint32_t end = time_us_32();
+        uint32_t elapsed_us = end - start;
+        printf("Block time: %u us\n", elapsed_us);
         printf("----\n");
         sleep_ms(1000);
     }
