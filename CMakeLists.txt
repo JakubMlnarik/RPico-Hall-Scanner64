@@ -10,7 +10,8 @@ pico_sdk_init()
 
 # Add your executable and source files
 add_executable(my_project
-    main.c
+    src/main.c
+    src/mcp3008_reader.c
 )
 
 # Enable USB stdio and disable UART stdio
@@ -18,7 +19,7 @@ pico_enable_stdio_usb(my_project 1)
 pico_enable_stdio_uart(my_project 0)
 
 # Link the Pico SDK to your project
-target_link_libraries(my_project pico_stdlib hardware_spi)
+target_link_libraries(my_project pico_stdlib hardware_spi pico_multicore)
 
 # Create map/bin/hex/uf2 files
 pico_add_extra_outputs(my_project)
