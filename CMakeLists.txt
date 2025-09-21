@@ -18,7 +18,7 @@ pico_enable_stdio_usb(my_project 1)
 pico_enable_stdio_uart(my_project 0)
 
 # Link the Pico SDK to your project
-target_link_libraries(my_project pico_stdlib)
+target_link_libraries(my_project pico_stdlib hardware_spi)
 
 # Create map/bin/hex/uf2 files
 pico_add_extra_outputs(my_project)
