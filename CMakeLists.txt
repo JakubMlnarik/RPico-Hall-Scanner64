@@ -11,6 +11,8 @@ pico_sdk_init()
 # Add your executable and source files
 add_executable(my_project
     src/main.c
+    src/settings.c
+    src/midi.c
     src/mcp3008_reader.c
 )
 

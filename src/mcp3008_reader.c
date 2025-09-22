@@ -1,14 +1,12 @@
 #include "mcp3008_reader.h"
 #include "pico/critical_section.h"
-volatile uint16_t mcp3008_values[MCP3008_TOTAL_CHANNELS] = {0};
-critical_section_t mcp3008_critical_section;
 #include "hardware/spi.h"
 #include "pico/stdlib.h"
 
 static const uint8_t cs_pins[8] = MCP3008_CS_PINS;
 
 void mcp3008_reader_init(void) {
-    critical_section_init(&mcp3008_critical_section);
+    // No shared state, no critical section needed
     spi_init(MCP3008_SPI_PORT, 1000 * 1000); // 1 MHz
     gpio_set_function(16, GPIO_FUNC_SPI); // MISO
     gpio_set_function(18, GPIO_FUNC_SPI); // SCK
@@ -35,14 +33,10 @@ static uint16_t mcp3008_read_channel(uint8_t chip, uint8_t channel) {
     return result;
 }
 
-void mcp3008_read_all(uint16_t values[MCP3008_TOTAL_CHANNELS]) {
-    critical_section_enter_blocking(&mcp3008_critical_section);
+void mcp3008_read_all(uint16_t *values) {
     for (uint8_t chip = 0; chip < MCP3008_NUM_CHIPS; ++chip) {
         for (uint8_t ch = 0; ch < MCP3008_CHANNELS_PER_CHIP; ++ch) {
-            uint16_t val = mcp3008_read_channel(chip, ch);
-            values[chip * MCP3008_CHANNELS_PER_CHIP + ch] = val;
-            mcp3008_values[chip * MCP3008_CHANNELS_PER_CHIP + ch] = val;
+            values[chip * MCP3008_CHANNELS_PER_CHIP + ch] = mcp3008_read_channel(chip, ch);
         }
     }
-    critical_section_exit(&mcp3008_critical_section);
 }
