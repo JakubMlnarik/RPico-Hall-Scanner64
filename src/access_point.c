@@ -740,9 +740,6 @@ int wifi_ap_proc(SETTINGS *set) {
         return -1;
     }
     printf("✓ HTTP server started on port %d\n", TCP_PORT);
-
-    // Turn on LED to indicate AP is active
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
     
     printf("\n=== Access Point Ready ===\n");
     printf("Connect to open WiFi network '%s' (no password required)\n", ssid);
@@ -757,14 +754,11 @@ int wifi_ap_proc(SETTINGS *set) {
         // Wait for work or timeout (1 second)
         cyw43_arch_wait_for_work_until(make_timeout_time_ms(1000));
         
-        // Optional: Blink LED every 10 seconds to show we're alive
-        static uint32_t last_blink = 0;
+        // Heartbeat message every 10 seconds
+        static uint32_t last_heartbeat = 0;
         uint32_t now = to_ms_since_boot(get_absolute_time());
-        if (now - last_blink > 10000) {
-            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
-            sleep_ms(100);
-            cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
-            last_blink = now;
+        if (now - last_heartbeat > 10000) {
+            last_heartbeat = now;
             printf("Access Point heartbeat - uptime: %lu seconds\n", now / 1000);
         }
     }
