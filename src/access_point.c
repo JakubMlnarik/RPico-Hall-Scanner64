@@ -4,13 +4,6 @@ SETTINGS *p_settings;
 
 char html_page[HTML_RESULT_SIZE];
 
-// Commented out for now - these arrays expect settings fields that don't exist yet
-// char in1_midi_ch_html_str[265];
-// char in1_base_note_html_str[265];
-// char in2_midi_ch_html_str[265];
-// char in2_base_note_html_str[265];
-// char an_midi_ch_html_str[265];
-
 void update_html_page() {
     // Create a modern, responsive HTML interface
     memset(html_page, '\0', HTML_RESULT_SIZE);
@@ -706,15 +699,15 @@ int wifi_ap_proc(SETTINGS *set) {
 
     // Configure access point settings
     const char *ssid = DEV_NAME;
-    const char *password = "hall-scanner"; // WPA2 password (8+ chars required)
+    const char *password = NULL; // No password - open network
     
     printf("Configuring Access Point...\n");
     printf("  SSID: %s\n", ssid);
-    printf("  Password: %s\n", password);
-    printf("  Security: WPA2-AES-PSK\n");
+    printf("  Password: None (Open Network)\n");
+    printf("  Security: Open (No encryption)\n");
 
     // Enable access point mode
-    cyw43_arch_enable_ap_mode(ssid, password, CYW43_AUTH_WPA2_AES_PSK);
+    cyw43_arch_enable_ap_mode(ssid, password, CYW43_AUTH_OPEN);
     printf("✓ Access Point enabled\n");
 
     // Configure IP addresses
@@ -752,7 +745,7 @@ int wifi_ap_proc(SETTINGS *set) {
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
     
     printf("\n=== Access Point Ready ===\n");
-    printf("Connect to WiFi network '%s' with password '%s'\n", ssid, password);
+    printf("Connect to open WiFi network '%s' (no password required)\n", ssid);
     printf("Then open http://192.168.4.1 or http://%s.local in your browser\n", ssid);
     printf("===============================\n\n");
 

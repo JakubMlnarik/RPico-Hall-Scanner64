@@ -33,7 +33,7 @@ The enhanced access point module provides a modern web interface for configuring
 
 ### 2. Connect to WiFi
 - Look for WiFi network: **"Hall Scanner"**
-- Password: **"hall-scanner"**
+- **No password required** (Open Network)
 - Connect your device (phone, laptop, tablet)
 
 ### 3. Open Web Interface
@@ -52,8 +52,8 @@ The enhanced access point module provides a modern web interface for configuring
 | Setting | Value |
 |---------|--------|
 | SSID | Hall Scanner |
-| Password | hall-scanner |
-| Security | WPA2-AES-PSK |
+| Password | None (Open Network) |
+| Security | Open (No encryption) |
 | Gateway IP | 192.168.4.1 |
 | DHCP Range | 192.168.4.16 - 192.168.4.23 |
 | Subnet Mask | 255.255.255.0 |
@@ -96,10 +96,10 @@ The enhanced access point module provides a modern web interface for configuring
 - Check for interference from other 2.4GHz devices
 
 ### Can't Connect to WiFi
-- Verify password: "hall-scanner"
-- Ensure device supports WPA2
+- No password required (open network)
+- Ensure device WiFi is enabled
 - Try forgetting and reconnecting to the network
-- Check device WiFi is enabled
+- Check for interference from other 2.4GHz devices
 
 ### Web Page Won't Load
 - Verify you're connected to "Hall Scanner" network
@@ -123,8 +123,8 @@ Connect a serial terminal (115200 baud) to see detailed status information:
 ✓ Server state allocated
 Configuring Access Point...
   SSID: Hall Scanner
-  Password: hall-scanner
-  Security: WPA2-AES-PSK
+  Password: None (Open Network)
+  Security: Open (No encryption)
 ✓ Access Point enabled
 ✓ Network configuration:
   Gateway IP: 192.168.4.1
@@ -134,7 +134,7 @@ Configuring Access Point...
 ✓ HTTP server started on port 80
 
 === Access Point Ready ===
-Connect to WiFi network 'Hall Scanner' with password 'hall-scanner'
+Connect to open WiFi network 'Hall Scanner' (no password required)
 Then open http://192.168.4.1 or http://Hall Scanner.local in your browser
 ===============================
 ```
@@ -153,10 +153,13 @@ Then open http://192.168.4.1 or http://Hall Scanner.local in your browser
 - Responsive breakpoints at 768px for mobile
 
 ### Security Considerations
-- Change default password in production
+- **⚠️ SECURITY WARNING**: Network is now OPEN (no password protection)
+- Any device in range can connect and access the configuration interface
+- Consider adding password protection for production environments
 - Add HTTPS support for sensitive configurations
 - Implement authentication for advanced settings
 - Rate limiting for API endpoints
+- Use in trusted environments only
 
 ## License
 This project uses components from:
