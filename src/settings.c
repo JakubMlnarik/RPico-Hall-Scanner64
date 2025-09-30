@@ -32,8 +32,8 @@ void settings_load(SETTINGS *set) {
             set->sensitivity = SETTINGS_SENSITIVITY_DEF;
             set->threshold = SETTINGS_THRESHOLD_DEF;
             for (int i = 0; i < MIDI_NO_TONES; ++i) {
-                set->released_keys_voltage[i] = SETTINGS_RELEASED_KEYS_VOLTAGE_DEF;
-                set->pressed_keys_voltage[i] = SETTINGS_PRESSED_KEYS_VOLTAGE_DEF;
+                set->coef_A[i] = SETTINGS_COEF_A_DEF;
+                set->coef_B[i] = SETTINGS_COEF_B_DEF;
             }
             settings_save(set);
     }

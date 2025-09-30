@@ -39,13 +39,13 @@ int main() {
     printf("  m_base: %u\n", main_settings.m_base);
     printf("  sensitivity: %u\n", main_settings.sensitivity);
     printf("  threshold: %u\n", main_settings.threshold);
-    printf("  released_keys_voltage: [");
+    printf("  coef_A: [");
     for (int i = 0; i < MIDI_NO_TONES; ++i) {
-        printf("%u%s", main_settings.released_keys_voltage[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+        printf("%u%s", main_settings.coef_A[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
     }
-    printf("  pressed_keys_voltage: [");
+    printf("  coef_B: [");
     for (int i = 0; i < MIDI_NO_TONES; ++i) {
-        printf("%u%s", main_settings.pressed_keys_voltage[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+        printf("%u%s", main_settings.coef_B[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
     }
 
     mcp3008_reader_init();
