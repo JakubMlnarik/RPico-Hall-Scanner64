@@ -38,7 +38,8 @@ void midi_process(SETTINGS *set, critical_section_t *cs, queue_t *buff) {
     uint16_t curr[MCP3008_TOTAL_CHANNELS] = {0};
     while (true) {
         mcp3008_read_all(curr);
-        for (int i = 0; i < MCP3008_TOTAL_CHANNELS; ++i) {
+        printf("Current readings: %d, %d, %d\n", curr[0], curr[1], curr[2]);
+        /* for (int i = 0; i < MCP3008_TOTAL_CHANNELS; ++i) {
             if (i < MIDI_NO_TONES) { // I am interested only about the real physical sensors
                 // Example threshold: 100
                 if (curr[i] > 100 && prev[i] <= 100) {
@@ -49,7 +50,7 @@ void midi_process(SETTINGS *set, critical_section_t *cs, queue_t *buff) {
             }
             
             prev[i] = curr[i];
-        }
-        sleep_ms(10);
+        } */
+        sleep_ms(2);
     }
 }

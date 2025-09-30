@@ -3,6 +3,7 @@
 #include "hardware/spi.h"
 #include "pico/stdlib.h"
 
+// TODO: TEMPORARY - Using MCP3208 instead of MCP3008
 static const uint8_t cs_pins[8] = MCP3008_CS_PINS;
 
 void mcp3008_reader_init(void) {
@@ -18,18 +19,21 @@ void mcp3008_reader_init(void) {
     }
 }
 
+// TODO: TEMPORARY - Modified for MCP3208 (12-bit instead of 10-bit)
 static uint16_t mcp3008_read_channel(uint8_t chip, uint8_t channel) {
     uint8_t cs = cs_pins[chip / (MCP3008_NUM_CHIPS / 3)];
     gpio_put(cs, 0);
+    // MCP3208 SPI command format (same as MCP3008 but expecting 12-bit result)
     uint8_t tx[] = {
-        0x06 | ((channel & 0x04) >> 2),
-        (channel & 0x03) << 6,
-        0x00
+        0x06 | ((channel & 0x04) >> 2),  // Start bit + SGL/DIFF + D2
+        (channel & 0x03) << 6,          // D1 + D0 + don't care bits
+        0x00                            // Don't care
     };
     uint8_t rx[3];
     spi_write_read_blocking(MCP3008_SPI_PORT, tx, rx, 3);
     gpio_put(cs, 1);
-    uint16_t result = ((rx[1] & 0x0F) << 8) | rx[2];
+    // MCP3208 returns 12-bit result (instead of 10-bit for MCP3008)
+    uint16_t result = ((rx[1] & 0x0F) << 8) | rx[2];  // Extract 12-bit value
     return result;
 }
 
