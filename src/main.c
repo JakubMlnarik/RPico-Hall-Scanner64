@@ -21,6 +21,14 @@ void midi_process_core1_entry() {
     midi_process(&main_settings, &cs_lock, &shared_midi_buff);
 }
 int main() {
+    // Initialize stdio for USB serial communication
+    stdio_init_all();
+    
+    // Wait a bit for USB to be ready
+    sleep_ms(2000);
+    
+    printf("Starting RPico Hall Scanner...\n");
+    
     // Initialize MIDI queue and critical section lock
     critical_section_init(&cs_lock);
     queue_init(&shared_midi_buff, sizeof(uint8_t), MIDI_BUFFER_SIZE);
