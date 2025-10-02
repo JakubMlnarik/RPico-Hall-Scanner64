@@ -244,7 +244,7 @@ void update_html_page() {
     written = snprintf(ptr, remaining,
         "                </div>\n"
         "                <div class=\"btn-group\">\n"
-        "                    <button type=\"submit\" class=\"btn btn-primary\" onclick=\"showSaveMessage()\">💾 Save Settings</button>\n"
+        "                    <button type=\"submit\" class=\"btn btn-primary\" id=\"saveBtn\">💾 Save Settings</button>\n"
         "                    <a href=\"/settings?default=1\" class=\"btn btn-secondary\" onclick=\"return confirm('Reset all settings to defaults?')\">🔄 Reset to Defaults</a>\n"
         "                </div>\n"
         "            </form>\n"
@@ -511,18 +511,61 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     assert(con_state && con_state->pcb == pcb);
     
     if (p->tot_len > 0) {
-        // Copy the request into the buffer
-        size_t copy_len = p->tot_len > sizeof(con_state->headers) - 1 ? sizeof(con_state->headers) - 1 : p->tot_len;
-        pbuf_copy_partial(p, con_state->headers, copy_len, 0);
-        con_state->headers[copy_len] = '\0';
+        // Calculate how much data we can still accept
+        size_t available_space = sizeof(con_state->headers) - 1 - con_state->received_len;
+        size_t copy_len = p->tot_len > available_space ? available_space : p->tot_len;
         
-        printf("HTTP Request received (%d bytes, buffer capacity: %zu bytes):\n%s\n", 
-               (int)p->tot_len, sizeof(con_state->headers), con_state->headers);
+        // Append new data to existing buffer
+        pbuf_copy_partial(p, con_state->headers + con_state->received_len, copy_len, 0);
+        con_state->received_len += copy_len;
+        con_state->headers[con_state->received_len] = '\0';
         
-        if (p->tot_len >= sizeof(con_state->headers) - 1) {
-            printf("WARNING: Request was truncated! Total size: %d, buffer size: %zu\n", 
-                   (int)p->tot_len, sizeof(con_state->headers));
+        printf("HTTP Request chunk received (%d bytes, total: %d bytes, buffer capacity: %zu bytes)\n", 
+               (int)p->tot_len, con_state->received_len, sizeof(con_state->headers));
+        
+        if (p->tot_len > available_space) {
+            printf("WARNING: Request chunk was truncated! Chunk size: %d, available space: %zu\n", 
+                   (int)p->tot_len, available_space);
         }
+        
+        // Check if we have a complete HTTP request
+        bool request_complete = false;
+        if (strncmp(con_state->headers, "GET ", 4) == 0) {
+            // GET requests are complete when we have the full header
+            if (strstr(con_state->headers, "\r\n\r\n") || strstr(con_state->headers, "\n\n")) {
+                request_complete = true;
+            }
+        } else if (strncmp(con_state->headers, "POST ", 5) == 0) {
+            // POST requests need header + body
+            char *content_length_str = strstr(con_state->headers, "Content-Length: ");
+            if (content_length_str) {
+                int content_length = atoi(content_length_str + 16);
+                char *body_start = strstr(con_state->headers, "\r\n\r\n");
+                if (!body_start) body_start = strstr(con_state->headers, "\n\n");
+                if (body_start) {
+                    body_start += (body_start[1] == '\n') ? 2 : 4; // Skip separator
+                    int body_length = con_state->received_len - (body_start - con_state->headers);
+                    if (body_length >= content_length) {
+                        request_complete = true;
+                    }
+                    printf("POST progress: expected body length: %d, received: %d\n", content_length, body_length);
+                }
+            } else {
+                // No Content-Length header, assume complete if we have separator
+                if (strstr(con_state->headers, "\r\n\r\n") || strstr(con_state->headers, "\n\n")) {
+                    request_complete = true;
+                }
+            }
+        }
+        
+        if (!request_complete) {
+            printf("Request incomplete, waiting for more data...\n");
+            tcp_recved(pcb, p->tot_len);
+            pbuf_free(p);
+            return ERR_OK;
+        }
+        
+        printf("Complete HTTP Request received:\n%s\n", con_state->headers);
         
         char *request_line = con_state->headers;
         char *request_path = NULL;
@@ -552,7 +595,7 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
             printf("POST request to path: '%s'\n", request_path);
             printf("Full request buffer size: %zu bytes\n", copy_len);
             
-            // Find the body (after double CRLF)
+            // Find the body (try multiple separator patterns)
             char *body = strstr(con_state->headers, "\r\n\r\n");
             if (body) {
                 body += 4; // Skip the "\r\n\r\n"
@@ -566,8 +609,25 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
                     params = body;
                     printf("Found POST body after \\n\\n: '%s'\n", params);
                 } else {
-                    printf("ERROR: Could not find POST body separator in request\n");
-                    printf("Request headers: '%s'\n", con_state->headers);
+                    // Try mixed line endings \r\n\n
+                    body = strstr(con_state->headers, "\r\n\n");
+                    if (body) {
+                        body += 3;
+                        params = body;
+                        printf("Found POST body after \\r\\n\\n: '%s'\n", params);
+                    } else {
+                        // Last resort: look for Content-Length and try to find body
+                        char *content_length = strstr(con_state->headers, "Content-Length:");
+                        if (content_length) {
+                            // If we have Content-Length but no separator, the request might be truncated
+                            printf("WARNING: Found Content-Length header but no body separator - request likely truncated\n");
+                            printf("Request size: %zu, buffer capacity: %zu\n", copy_len, sizeof(con_state->headers));
+                        } else {
+                            printf("ERROR: Could not find POST body separator in request\n");
+                        }
+                        printf("Request data: '%s'\n", con_state->headers);
+                        params = NULL; // No body found
+                    }
                 }
             }
             
@@ -655,6 +715,7 @@ static err_t tcp_server_accept(void *arg, struct tcp_pcb *client_pcb, err_t err)
     }
     con_state->pcb = client_pcb; // for checking
     con_state->gw = &state->gw;
+    con_state->received_len = 0; // Initialize received data counter
 
     // setup connection to client
     tcp_arg(client_pcb, con_state);
