@@ -193,14 +193,13 @@ void update_html_page() {
         "                            <option value=\"0\"%s>Standard MIDI (31.25 kbps)</option>\n"
         "                            <option value=\"1\"%s>High Speed (Non-standard)</option>\n"
         "                        </select>\n"
-        "                        <div class=\"current-value\">\n"
-        "                            <span class=\"status-indicator %s\">%s</span>\n"
-        "                        </div>\n"
         "                    </div>\n",
         (p_settings && p_settings->fast_midi == 0) ? " selected" : "",
-        (p_settings && p_settings->fast_midi == 1) ? " selected" : "",
-        (p_settings && p_settings->fast_midi) ? "status-enabled" : "status-disabled",
-        (p_settings && p_settings->fast_midi) ? "Enabled" : "Disabled");
+        (p_settings && p_settings->fast_midi == 1) ? " selected" : "");
+    
+    ptr += written; remaining -= written;
+
+    // Sensitivity Setting
     
     ptr += written; remaining -= written;
 
