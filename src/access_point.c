@@ -568,32 +568,47 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
         printf("Complete HTTP Request received:\n%s\n", con_state->headers);
         
         char *request_line = con_state->headers;
+        char request_path_buf[64];  // Buffer for extracted path
         char *request_path = NULL;
         char *params = NULL;
         
         // Handle GET request
         if (strncmp("GET ", request_line, 4) == 0) {
-            request_path = request_line + 4; // Skip "GET "
-            char *space = strchr(request_path, ' ');
-            if (space) *space = '\0';
-            
-            // Extract query parameters
-            char *query = strchr(request_path, '?');
-            if (query) {
-                *query = '\0';
-                params = query + 1;
+            char *path_start = request_line + 4; // Skip "GET "
+            char *space = strchr(path_start, ' ');
+            if (space) {
+                size_t path_len = space - path_start;
+                if (path_len < sizeof(request_path_buf)) {
+                    strncpy(request_path_buf, path_start, path_len);
+                    request_path_buf[path_len] = '\0';
+                    request_path = request_path_buf;
+                    
+                    // Extract query parameters from our copy
+                    char *query = strchr(request_path, '?');
+                    if (query) {
+                        *query = '\0';
+                        params = query + 1;
+                    }
+                }
             }
             
-            printf("GET request: path='%s', params='%s'\n", request_path, params ? params : "none");
+            printf("GET request: path='%s', params='%s'\n", request_path ? request_path : "unknown", params ? params : "none");
         }
         // Handle POST request
         else if (strncmp("POST ", request_line, 5) == 0) {
-            request_path = request_line + 5; // Skip "POST "
-            char *space = strchr(request_path, ' ');
-            if (space) *space = '\0';
+            char *path_start = request_line + 5; // Skip "POST "
+            char *space = strchr(path_start, ' ');
+            if (space) {
+                size_t path_len = space - path_start;
+                if (path_len < sizeof(request_path_buf)) {
+                    strncpy(request_path_buf, path_start, path_len);
+                    request_path_buf[path_len] = '\0';
+                    request_path = request_path_buf;
+                }
+            }
             
             printf("POST request to path: '%s'\n", request_path);
-            printf("Full request buffer size: %zu bytes\n", copy_len);
+            printf("Full request buffer size: %d bytes\n", con_state->received_len);
             
             // Find the body (try multiple separator patterns)
             char *body = strstr(con_state->headers, "\r\n\r\n");
@@ -616,16 +631,9 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
                         params = body;
                         printf("Found POST body after \\r\\n\\n: '%s'\n", params);
                     } else {
-                        // Last resort: look for Content-Length and try to find body
-                        char *content_length = strstr(con_state->headers, "Content-Length:");
-                        if (content_length) {
-                            // If we have Content-Length but no separator, the request might be truncated
-                            printf("WARNING: Found Content-Length header but no body separator - request likely truncated\n");
-                            printf("Request size: %zu, buffer capacity: %zu\n", copy_len, sizeof(con_state->headers));
-                        } else {
-                            printf("ERROR: Could not find POST body separator in request\n");
-                        }
-                        printf("Request data: '%s'\n", con_state->headers);
+                        printf("ERROR: Could not find POST body separator in request\n");
+                        printf("Request size: %d, buffer capacity: %zu\n", con_state->received_len, sizeof(con_state->headers));
+                        printf("Request data (first 200 chars): '%.200s'\n", con_state->headers);
                         params = NULL; // No body found
                     }
                 }
