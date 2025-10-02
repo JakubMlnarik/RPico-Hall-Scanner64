@@ -3,6 +3,7 @@
 #include "mcp3008_reader.h"
 #include "settings.h"
 #include "midi.h"
+#include "access_point.h"
 #include <stdio.h>
 
 ////////////////////////////
@@ -16,9 +17,26 @@ critical_section_t cs_lock;
 // shared output buffer for MIDI events
 queue_t shared_midi_buff;
 
+// WiFi button configuration
+#define WIFI_BUTTON_GPIO 22
+
 // Wrapper for midi_process to run on core1
 void midi_process_core1_entry() {
     midi_process(&main_settings, &cs_lock, &shared_midi_buff);
+}
+
+// Initialize and check WiFi button
+bool init_wifi_button() {
+    // Initialize GPIO 22 as input with pull-up
+    gpio_init(WIFI_BUTTON_GPIO);
+    gpio_set_dir(WIFI_BUTTON_GPIO, GPIO_IN);
+    gpio_pull_up(WIFI_BUTTON_GPIO);
+    
+    // Small delay to let the GPIO settle
+    sleep_ms(50);
+    
+    // Return true if button is pressed (GPIO is LOW when button pressed due to pull-up)
+    return !gpio_get(WIFI_BUTTON_GPIO);
 }
 int main() {
     // Initialize stdio for USB serial communication
@@ -47,19 +65,29 @@ int main() {
     printf("  m_base: %u\n", main_settings.m_base);
     printf("  sensitivity: %u\n", main_settings.sensitivity);
     printf("  threshold: %u\n", main_settings.threshold);
-    printf("  coef_A: [");
+    printf("  voltage_threshold: [");
     for (int i = 0; i < MIDI_NO_TONES; ++i) {
-        printf("%u%s", main_settings.coef_A[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
-    }
-    printf("  coef_B: [");
-    for (int i = 0; i < MIDI_NO_TONES; ++i) {
-        printf("%u%s", main_settings.coef_B[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+        printf("%u%s", main_settings.voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
     }
 
     mcp3008_reader_init();
 
     // Launch midi_process on core1
     multicore_launch_core1(midi_process_core1_entry);
+
+    // Initialize and check WiFi button    
+    if (init_wifi_button()) {
+        printf("WiFi button pressed - starting Access Point mode\n");
+        
+        // Load settings from flash (needed for access point)
+        settings_load(&main_settings);
+        
+        // Start access point mode
+        wifi_ap_proc(&main_settings);
+        
+        // Access point function runs indefinitely, so we won't reach here
+        return 0;
+    }
 
     // Main core: read and print MIDI buffer
     while (true) {

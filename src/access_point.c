@@ -228,22 +228,15 @@ void update_html_page() {
     
     ptr += written; remaining -= written;
 
-    // Coefficient A and B (Advanced Settings)
+    // Voltage Threshold (Advanced Settings)
     written = snprintf(ptr, remaining,
         "                    <div class=\"setting-card\">\n"
-        "                        <label class=\"setting-label\">Coefficient A (First Tone)</label>\n"
-        "                        <input type=\"number\" name=\"coef_a\" class=\"setting-input\" min=\"0\" max=\"65535\" value=\"%d\">\n"
-        "                        <div class=\"current-value\">Current: %d</div>\n"
-        "                    </div>\n"
-        "                    <div class=\"setting-card\">\n"
-        "                        <label class=\"setting-label\">Coefficient B (First Tone)</label>\n"
-        "                        <input type=\"number\" name=\"coef_b\" class=\"setting-input\" min=\"0\" max=\"65535\" value=\"%d\">\n"
+        "                        <label class=\"setting-label\">Voltage Threshold (First Tone)</label>\n"
+        "                        <input type=\"number\" name=\"voltage_threshold\" class=\"setting-input\" min=\"0\" max=\"65535\" value=\"%d\">\n"
         "                        <div class=\"current-value\">Current: %d</div>\n"
         "                    </div>\n",
-        p_settings && p_settings->coef_A ? p_settings->coef_A[0] : SETTINGS_COEF_A_DEF,
-        p_settings && p_settings->coef_A ? p_settings->coef_A[0] : SETTINGS_COEF_A_DEF,
-        p_settings && p_settings->coef_B ? p_settings->coef_B[0] : SETTINGS_COEF_B_DEF,
-        p_settings && p_settings->coef_B ? p_settings->coef_B[0] : SETTINGS_COEF_B_DEF);
+        p_settings && p_settings->voltage_threshold ? p_settings->voltage_threshold[0] : SETTINGS_VOLTAGE_THRESHOLD_DEF,
+        p_settings && p_settings->voltage_threshold ? p_settings->voltage_threshold[0] : SETTINGS_VOLTAGE_THRESHOLD_DEF);
     
     ptr += written; remaining -= written;
 
@@ -415,25 +408,16 @@ static int process_settings_form(const char *params) {
         }
     }
     
-    // Parse Coefficient A
-    if (extract_param_value(params, "coef_a", value_str, sizeof(value_str))) {
+    // Parse Voltage Threshold
+    if (extract_param_value(params, "voltage_threshold", value_str, sizeof(value_str))) {
         value = atoi(value_str);
         if (value >= 0 && value <= 65535) {
-            p_settings->coef_A[0] = (uint16_t)value;
+            p_settings->voltage_threshold[0] = (uint16_t)value;
             settings_changed = true;
-            printf("Updated coefficient A to: %d\n", value);
+            printf("Updated voltage threshold to: %d\n", value);
         }
     }
-    
-    // Parse Coefficient B
-    if (extract_param_value(params, "coef_b", value_str, sizeof(value_str))) {
-        value = atoi(value_str);
-        if (value >= 0 && value <= 65535) {
-            p_settings->coef_B[0] = (uint16_t)value;
-            settings_changed = true;
-            printf("Updated coefficient B to: %d\n", value);
-        }
-    }
+
     
     // Save settings if any changes were made
     if (settings_changed) {
@@ -459,8 +443,7 @@ static int test_server_content(const char *request, const char *params, char *re
             p_settings->m_base = SETTINGS_M_BASE_DEF;
             p_settings->sensitivity = SETTINGS_SENSITIVITY_DEF;
             p_settings->threshold = SETTINGS_THRESHOLD_DEF;
-            if (p_settings->coef_A) p_settings->coef_A[0] = SETTINGS_COEF_A_DEF;
-            if (p_settings->coef_B) p_settings->coef_B[0] = SETTINGS_COEF_B_DEF;
+            if (p_settings->voltage_threshold) p_settings->voltage_threshold[0] = SETTINGS_VOLTAGE_THRESHOLD_DEF;
             settings_save(p_settings);
         }
         // Handle form submission with settings

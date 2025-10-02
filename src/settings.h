@@ -27,9 +27,8 @@ typedef struct SETTINGS_ {
     uint8_t m_ch;       // MIDI channel
     uint8_t m_base;     // Base MIDI note
 
-    // Coefficient to calculate position from voltage
-    uint16_t coef_A[MIDI_NO_TONES];
-    uint16_t coef_B[MIDI_NO_TONES];
+    // Voltage threshold for note detection
+    uint16_t voltage_threshold[MIDI_NO_TONES];
 
     // Sensitivity factor - to calculate velocity from voltage difference (0-100%)
     uint8_t sensitivity;
@@ -48,8 +47,7 @@ typedef struct SETTINGS_ {
 #define SETTINGS_M_BASE_DEF 36
 #define SETTINGS_SENSITIVITY_DEF 50
 #define SETTINGS_THRESHOLD_DEF 30
-#define SETTINGS_COEF_A_DEF 500
-#define SETTINGS_COEF_B_DEF 2000
+#define SETTINGS_VOLTAGE_THRESHOLD_DEF 1000
 
 
 extern void settings_load(SETTINGS *set);
