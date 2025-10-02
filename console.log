@@ -1,0 +1,38 @@
+HTTP Request chunk received (746 bytes, total: 746 bytes, buffer capacity: 2048 bytes)
+POST progress: expected body length: 79, received: 81
+Complete HTTP Request received:
+POST /settings HTTP/1.1
+Host: www.msftconnecttest.com
+Connection: keep-alive
+Content-Length: 79
+Cache-Control: max-age=0
+Origin: http://www.msftconnecttest.com
+Content-Type: application/x-www-form-urlencoded
+Upgrade-Insecure-Requests: 1
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+Referer: http://www.msftconnecttest.com/settings
+Accept-Encoding: gzip, deflate
+Accept-Language: cs,en;q=0.9,en-GB;q=0.8,en-US;q=0.7
+
+m_ch=1&m_base=36&fast_midi=0&sensitivity=50&threshold=30&voltage_threshold=1000
+POST request to path: '/settings'
+Full request buffer size: 746 bytes
+ERROR: Could not find POST body separator in request
+Request data: 'POST /settings'
+POST request: path='/settings', body='none'
+HTTP Response sent: 125 header bytes + 8191 body bytes
+HTTP Request chunk received (433 bytes, total: 433 bytes, buffer capacity: 2048 bytes)
+Complete HTTP Request received:
+GET /favicon.ico HTTP/1.1
+Host: www.msftconnecttest.com
+Connection: keep-alive
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36 Edg/140.0.0.0
+Accept: image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8
+Referer: http://www.msftconnecttest.com/settings
+Accept-Encoding: gzip, deflate
+Accept-Language: cs,en;q=0.9,en-GB;q=0.8,en-US;q=0.7
+
+
+GET request: path='/favicon.ico', params='none'
+HTTP Response sent: 124 header bytes + 324 body bytes
