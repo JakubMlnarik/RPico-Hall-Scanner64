@@ -259,14 +259,31 @@ void update_html_page() {
         "        </div>\n"
         "    </div>\n"
         "    <script>\n"
-        "        function showSaveMessage() {\n"
-        "            setTimeout(function() {\n"
-        "                document.getElementById('saveMessage').style.display = 'block';\n"
-        "                setTimeout(function() {\n"
-        "                    document.getElementById('saveMessage').style.display = 'none';\n"
-        "                }, 3000);\n"
-        "            }, 100);\n"
-        "        }\n"
+        "        // Form submission handling\n"
+        "        document.addEventListener('DOMContentLoaded', function() {\n"
+        "            var form = document.querySelector('form');\n"
+        "            var saveBtn = document.getElementById('saveBtn');\n"
+        "            var saveMessage = document.getElementById('saveMessage');\n"
+        "            \n"
+        "            if (form && saveBtn && saveMessage) {\n"
+        "                form.addEventListener('submit', function(e) {\n"
+        "                    // Disable the save button to prevent double submission\n"
+        "                    saveBtn.disabled = true;\n"
+        "                    saveBtn.textContent = '💾 Saving...';\n"
+        "                    \n"
+        "                    // Show save message after a short delay to allow form submission\n"
+        "                    setTimeout(function() {\n"
+        "                        saveMessage.style.display = 'block';\n"
+        "                        setTimeout(function() {\n"
+        "                            saveMessage.style.display = 'none';\n"
+        "                            // Re-enable button and restore text\n"
+        "                            saveBtn.disabled = false;\n"
+        "                            saveBtn.textContent = '💾 Save Settings';\n"
+        "                        }, 3000);\n"
+        "                    }, 200);\n"
+        "                });\n"
+        "            }\n"
+        "        });\n"
         "        \n"
         "        // Update range input displays in real-time\n"
         "        document.addEventListener('DOMContentLoaded', function() {\n"
@@ -350,13 +367,16 @@ static int extract_param_value(const char *params, const char *name, char *value
 }
 
 static int process_settings_form(const char *params) {
-    if (!params || !p_settings) return 0;
+    if (!params || !p_settings) {
+        printf("ERROR: process_settings_form called with NULL params or p_settings\n");
+        return 0;
+    }
     
     bool settings_changed = false;
     char value_str[16];
     int value;
     
-    printf("Processing form data: %s\n", params);
+    printf("Processing form data (%d bytes): %s\n", (int)strlen(params), params);
     
     // Parse MIDI Channel (1-16, stored as 0-15)
     if (extract_param_value(params, "m_ch", value_str, sizeof(value_str))) {
@@ -496,7 +516,13 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
         pbuf_copy_partial(p, con_state->headers, copy_len, 0);
         con_state->headers[copy_len] = '\0';
         
-        printf("HTTP Request received (%d bytes):\n%s\n", (int)p->tot_len, con_state->headers);
+        printf("HTTP Request received (%d bytes, buffer capacity: %zu bytes):\n%s\n", 
+               (int)p->tot_len, sizeof(con_state->headers), con_state->headers);
+        
+        if (p->tot_len >= sizeof(con_state->headers) - 1) {
+            printf("WARNING: Request was truncated! Total size: %d, buffer size: %zu\n", 
+                   (int)p->tot_len, sizeof(con_state->headers));
+        }
         
         char *request_line = con_state->headers;
         char *request_path = NULL;
@@ -523,17 +549,25 @@ err_t tcp_server_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
             char *space = strchr(request_path, ' ');
             if (space) *space = '\0';
             
+            printf("POST request to path: '%s'\n", request_path);
+            printf("Full request buffer size: %zu bytes\n", copy_len);
+            
             // Find the body (after double CRLF)
             char *body = strstr(con_state->headers, "\r\n\r\n");
             if (body) {
                 body += 4; // Skip the "\r\n\r\n"
                 params = body;
+                printf("Found POST body after \\r\\n\\r\\n: '%s'\n", params);
             } else {
                 // Try with just \n\n (some clients might use this)
                 body = strstr(con_state->headers, "\n\n");
                 if (body) {
                     body += 2;
                     params = body;
+                    printf("Found POST body after \\n\\n: '%s'\n", params);
+                } else {
+                    printf("ERROR: Could not find POST body separator in request\n");
+                    printf("Request headers: '%s'\n", con_state->headers);
                 }
             }
             

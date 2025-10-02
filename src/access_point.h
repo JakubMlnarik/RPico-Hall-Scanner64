@@ -34,7 +34,7 @@ typedef struct TCP_SERVER_T_ {
 typedef struct TCP_CONNECT_STATE_T_ {
     struct tcp_pcb *pcb;
     int sent_len;
-    char headers[256];
+    char headers[1024];
     char result[HTML_RESULT_SIZE];
     int header_len;
     int result_len;
