@@ -51,6 +51,6 @@ void midi_process(SETTINGS *set, critical_section_t *cs, queue_t *buff) {
             
             prev[i] = curr[i];
         } */
-        sleep_ms(4);
+        sleep_ms(1000);
     }
 }

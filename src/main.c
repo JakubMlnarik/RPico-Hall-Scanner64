@@ -73,7 +73,7 @@ int main() {
     mcp3008_reader_init();
 
     // Launch midi_process on core1
-    multicore_launch_core1(midi_process_core1_entry);
+    //multicore_launch_core1(midi_process_core1_entry);
 
     // Initialize and check WiFi button    
     if (init_wifi_button()) {
@@ -90,18 +90,18 @@ int main() {
     }
 
     // Main core: read and print MIDI buffer
-    while (true) {
-        // Lock critical section before accessing the queue
-        critical_section_enter_blocking(&cs_lock);
-        while (!queue_is_empty(&shared_midi_buff)) {
-            uint8_t val;
-            if (queue_try_remove(&shared_midi_buff, &val)) {
-                printf("MIDI: %u\n", val);
-            }
-        }
-        critical_section_exit(&cs_lock);
-        sleep_ms(1000);
-    }
+    // while (true) {
+    //     // Lock critical section before accessing the queue
+    //     critical_section_enter_blocking(&cs_lock);
+    //     while (!queue_is_empty(&shared_midi_buff)) {
+    //         uint8_t val;
+    //         if (queue_try_remove(&shared_midi_buff, &val)) {
+    //             printf("MIDI: %u\n", val);
+    //         }
+    //     }
+    //     critical_section_exit(&cs_lock);
+    //     sleep_ms(1000);
+    // }
 
     return 0;
 }
