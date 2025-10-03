@@ -5,301 +5,73 @@ SETTINGS *p_settings;
 char html_page[HTML_RESULT_SIZE];
 
 void update_html_page() {
-    // Create a modern, responsive HTML interface
+    // Create a simple, clean HTML interface
     memset(html_page, '\0', HTML_RESULT_SIZE);
     
-    char *ptr = html_page;
-    size_t remaining = HTML_RESULT_SIZE;
-    int written = 0;
-
-    // HTML header with modern CSS
-    written = snprintf(ptr, remaining,
+    snprintf(html_page, HTML_RESULT_SIZE,
         "<!DOCTYPE html>\n"
-        "<html lang=\"en\">\n"
+        "<html>\n"
         "<head>\n"
-        "    <meta charset=\"UTF-8\">\n"
-        "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
-        "    <title>%s Configuration</title>\n"
+        "    <title>%s Settings</title>\n"
         "    <style>\n"
-        "        * { box-sizing: border-box; margin: 0; padding: 0; }\n"
-        "        body {\n"
-        "            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;\n"
-        "            background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);\n"
-        "            min-height: 100vh;\n"
-        "            padding: 20px;\n"
-        "        }\n"
-        "        .container {\n"
-        "            max-width: 800px;\n"
-        "            margin: 0 auto;\n"
-        "            background: white;\n"
-        "            border-radius: 16px;\n"
-        "            box-shadow: 0 20px 40px rgba(0,0,0,0.1);\n"
-        "            overflow: hidden;\n"
-        "        }\n"
-        "        .header {\n"
-        "            background: linear-gradient(135deg, #2c3e50, #3498db);\n"
-        "            color: white;\n"
-        "            padding: 30px;\n"
-        "            text-align: center;\n"
-        "        }\n"
-        "        .header h1 {\n"
-        "            font-size: 2.5em;\n"
-        "            margin-bottom: 10px;\n"
-        "            font-weight: 300;\n"
-        "        }\n"
-        "        .header p {\n"
-        "            opacity: 0.9;\n"
-        "            font-size: 1.1em;\n"
-        "        }\n"
-        "        .content {\n"
-        "            padding: 40px;\n"
-        "        }\n"
-        "        .settings-grid {\n"
-        "            display: grid;\n"
-        "            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));\n"
-        "            gap: 30px;\n"
-        "            margin-bottom: 30px;\n"
-        "        }\n"
-        "        .setting-card {\n"
-        "            background: #f8f9fa;\n"
-        "            border-radius: 12px;\n"
-        "            padding: 25px;\n"
-        "            border: 1px solid #e9ecef;\n"
-        "            transition: transform 0.2s ease;\n"
-        "        }\n"
-        "        .setting-card:hover {\n"
-        "            transform: translateY(-2px);\n"
-        "            box-shadow: 0 8px 25px rgba(0,0,0,0.1);\n"
-        "        }\n"
-        "        .setting-label {\n"
-        "            font-weight: 600;\n"
-        "            color: #2c3e50;\n"
-        "            margin-bottom: 10px;\n"
-        "            display: block;\n"
-        "        }\n"
-        "        .setting-input {\n"
-        "            width: 100%%;\n"
-        "            padding: 12px;\n"
-        "            border: 2px solid #e9ecef;\n"
-        "            border-radius: 8px;\n"
-        "            font-size: 16px;\n"
-        "            transition: border-color 0.3s ease;\n"
-        "        }\n"
-        "        .setting-input:focus {\n"
-        "            outline: none;\n"
-        "            border-color: #3498db;\n"
-        "            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);\n"
-        "        }\n"
-        "        .current-value {\n"
-        "            font-size: 1.5em;\n"
-        "            font-weight: bold;\n"
-        "            color: #27ae60;\n"
-        "            margin-top: 8px;\n"
-        "        }\n"
-        "        .btn-group {\n"
-        "            display: flex;\n"
-        "            gap: 15px;\n"
-        "            justify-content: center;\n"
-        "            margin-top: 40px;\n"
-        "        }\n"
-        "        .btn {\n"
-        "            padding: 15px 30px;\n"
-        "            border: none;\n"
-        "            border-radius: 8px;\n"
-        "            font-size: 16px;\n"
-        "            font-weight: 600;\n"
-        "            cursor: pointer;\n"
-        "            transition: all 0.3s ease;\n"
-        "            text-decoration: none;\n"
-        "            display: inline-block;\n"
-        "            text-align: center;\n"
-        "        }\n"
-        "        .btn-primary {\n"
-        "            background: linear-gradient(135deg, #3498db, #2980b9);\n"
-        "            color: white;\n"
-        "        }\n"
-        "        .btn-secondary {\n"
-        "            background: linear-gradient(135deg, #95a5a6, #7f8c8d);\n"
-        "            color: white;\n"
-        "        }\n"
-        "        .btn:hover {\n"
-        "            transform: translateY(-2px);\n"
-        "            box-shadow: 0 5px 15px rgba(0,0,0,0.2);\n"
-        "        }\n"
-        "        .status-indicator {\n"
-        "            display: inline-block;\n"
-        "            padding: 4px 12px;\n"
-        "            border-radius: 20px;\n"
-        "            font-size: 0.9em;\n"
-        "            font-weight: 600;\n"
-        "        }\n"
-        "        .status-enabled {\n"
-        "            background: #d4edda;\n"
-        "            color: #155724;\n"
-        "        }\n"
-        "        .status-disabled {\n"
-        "            background: #f8d7da;\n"
-        "            color: #721c24;\n"
-        "        }\n"
-        "        @media (max-width: 768px) {\n"
-        "            .container { margin: 10px; }\n"
-        "            .content { padding: 20px; }\n"
-        "            .btn-group { flex-direction: column; }\n"
-        "        }\n"
+        "        body { font-family: Arial, sans-serif; margin: 40px; background: #f5f5f5; }\n"
+        "        .container { max-width: 600px; margin: 0 auto; padding: 30px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }\n"
+        "        h1 { color: #333; margin-bottom: 20px; }\n"
+        "        .setting { margin-bottom: 20px; }\n"
+        "        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }\n"
+        "        input, select { width: 100%%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; }\n"
+        "        .current { color: #666; font-size: 12px; margin-top: 3px; }\n"
+        "        .buttons { margin-top: 30px; text-align: center; }\n"
+        "        button, .reset-btn { padding: 10px 20px; margin: 0 10px; border: none; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; }\n"
+        "        button { background: #007cba; color: white; }\n"
+        "        .reset-btn { background: #666; color: white; }\n"
+        "        .info { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #888; font-size: 12px; }\n"
         "    </style>\n"
         "</head>\n"
         "<body>\n"
         "    <div class=\"container\">\n"
-        "        <div class=\"header\">\n"
-        "            <h1>%s</h1>\n"
-        "            <p>Firmware Version: %s</p>\n"
-        "        </div>\n"
-        "        <div class=\"content\">\n"
-        "            <form method=\"POST\" action=\"/settings\">\n"
-        "                <div class=\"settings-grid\">\n",
-        DEV_NAME, DEV_NAME, FW_VERSION);
-    
-    ptr += written; remaining -= written;
-
-    // MIDI Channel Setting
-    written = snprintf(ptr, remaining,
-        "                    <div class=\"setting-card\">\n"
-        "                        <label class=\"setting-label\">MIDI Channel</label>\n"
-        "                        <input type=\"number\" name=\"m_ch\" class=\"setting-input\" min=\"1\" max=\"16\" value=\"%d\">\n"
-        "                        <div class=\"current-value\">Current: %d</div>\n"
-        "                    </div>\n",
-        p_settings ? p_settings->m_ch + 1 : 1,
-        p_settings ? p_settings->m_ch + 1 : 1);
-    
-    ptr += written; remaining -= written;
-
-    // Base MIDI Note Setting
-    written = snprintf(ptr, remaining,
-        "                    <div class=\"setting-card\">\n"
-        "                        <label class=\"setting-label\">Base MIDI Note</label>\n"
-        "                        <input type=\"number\" name=\"m_base\" class=\"setting-input\" min=\"0\" max=\"127\" value=\"%d\">\n"
-        "                        <div class=\"current-value\">Current: %d</div>\n"
-        "                    </div>\n",
-        p_settings ? p_settings->m_base : 36,
-        p_settings ? p_settings->m_base : 36);
-    
-    ptr += written; remaining -= written;
-
-    // Fast MIDI Setting
-    written = snprintf(ptr, remaining,
-        "                    <div class=\"setting-card\">\n"
-        "                        <label class=\"setting-label\">Fast MIDI Mode</label>\n"
-        "                        <select name=\"fast_midi\" class=\"setting-input\">\n"
-        "                            <option value=\"0\"%s>Standard MIDI (31.25 kbps)</option>\n"
-        "                            <option value=\"1\"%s>High Speed (Non-standard)</option>\n"
-        "                        </select>\n"
-        "                    </div>\n",
-        (p_settings && p_settings->fast_midi == 0) ? " selected" : "",
-        (p_settings && p_settings->fast_midi == 1) ? " selected" : "");
-    
-    ptr += written; remaining -= written;
-
-    // Sensitivity Setting
-    
-    ptr += written; remaining -= written;
-
-    // Sensitivity Setting
-    written = snprintf(ptr, remaining,
-        "                    <div class=\"setting-card\">\n"
-        "                        <label class=\"setting-label\">Sensitivity (%%)</label>\n"
-        "                        <input type=\"range\" name=\"sensitivity\" class=\"setting-input\" min=\"0\" max=\"100\" value=\"%d\" oninput=\"this.nextElementSibling.textContent=this.value+'%%'\">\n"
-        "                        <div class=\"current-value\">Current: %d%%</div>\n"
-        "                    </div>\n",
-        p_settings ? p_settings->sensitivity : 50,
-        p_settings ? p_settings->sensitivity : 50);
-    
-    ptr += written; remaining -= written;
-
-    // Threshold Setting
-    written = snprintf(ptr, remaining,
-        "                    <div class=\"setting-card\">\n"
-        "                        <label class=\"setting-label\">Threshold (%%)</label>\n"
-        "                        <input type=\"range\" name=\"threshold\" class=\"setting-input\" min=\"0\" max=\"100\" value=\"%d\" oninput=\"this.nextElementSibling.textContent=this.value+'%%'\">\n"
-        "                        <div class=\"current-value\">Current: %d%%</div>\n"
-        "                    </div>\n",
-        p_settings ? p_settings->threshold : 30,
-        p_settings ? p_settings->threshold : 30);
-    
-    ptr += written; remaining -= written;
-
-    // Voltage Threshold (Advanced Settings)
-    written = snprintf(ptr, remaining,
-        "                    <div class=\"setting-card\">\n"
-        "                        <label class=\"setting-label\">Voltage Threshold (First Tone)</label>\n"
-        "                        <input type=\"number\" name=\"voltage_threshold\" class=\"setting-input\" min=\"0\" max=\"65535\" value=\"%d\">\n"
-        "                        <div class=\"current-value\">Current: %d</div>\n"
-        "                    </div>\n",
-        p_settings && p_settings->voltage_threshold ? p_settings->voltage_threshold[0] : SETTINGS_VOLTAGE_THRESHOLD_DEF,
-        p_settings && p_settings->voltage_threshold ? p_settings->voltage_threshold[0] : SETTINGS_VOLTAGE_THRESHOLD_DEF);
-    
-    ptr += written; remaining -= written;
-
-    // Form submission buttons and footer
-    written = snprintf(ptr, remaining,
-        "                </div>\n"
-        "                <div class=\"btn-group\">\n"
-        "                    <button type=\"submit\" class=\"btn btn-primary\" id=\"saveBtn\">💾 Save Settings</button>\n"
-        "                    <a href=\"/settings?default=1\" class=\"btn btn-secondary\" onclick=\"return confirm('Reset all settings to defaults?')\">🔄 Reset to Defaults</a>\n"
-        "                </div>\n"
-        "            </form>\n"
-        "            <div id=\"saveMessage\" style=\"display: none; text-align: center; margin-top: 20px; padding: 15px; background: #d4edda; color: #155724; border-radius: 8px; font-weight: 600;\">\n"
-        "                ✓ Settings saved successfully!\n"
+        "        <h1>%s Configuration</h1>\n"
+        "        <p>Firmware: %s</p>\n"
+        "        <form method=\"POST\" action=\"/settings\">\n"
+        "            <div class=\"setting\">\n"
+        "                <label>MIDI Channel (1-16):</label>\n"
+        "                <input type=\"number\" name=\"m_ch\" min=\"1\" max=\"16\" value=\"%d\">\n"
+        "                <div class=\"current\">Current: %d</div>\n"
         "            </div>\n"
-        "            <div style=\"text-align: center; margin-top: 30px; color: #666; font-size: 0.9em;\">\n"
-        "                <p><strong>Device IP:</strong> 192.168.4.1 | <strong>WiFi:</strong> %s</p>\n"
-        "                <p><strong>Password:</strong> hall-scanner</p>\n"
-        "                <p>© 2025 %s Project - Firmware %s</p>\n"
+        "            <div class=\"setting\">\n"
+        "                <label>Base MIDI Note (0-127):</label>\n"
+        "                <input type=\"number\" name=\"m_base\" min=\"0\" max=\"127\" value=\"%d\">\n"
+        "                <div class=\"current\">Current: %d</div>\n"
         "            </div>\n"
+        "            <div class=\"setting\">\n"
+        "                <label>Fast MIDI Mode:</label>\n"
+        "                <select name=\"fast_midi\">\n"
+        "                    <option value=\"0\"%s>Standard MIDI (31.25 kbps)</option>\n"
+        "                    <option value=\"1\"%s>High Speed (Non-standard)</option>\n"
+        "                </select>\n"
+        "                <div class=\"current\">Current: %s</div>\n"
+        "            </div>\n"
+        "            <div class=\"buttons\">\n"
+        "                <button type=\"submit\">Save Settings</button>\n"
+        "                <a href=\"/settings?default=1\" class=\"reset-btn\" onclick=\"return confirm('Reset all settings to defaults?')\">Reset to Defaults</a>\n"
+        "            </div>\n"
+        "        </form>\n"
+        "        <div class=\"info\">\n"
+        "            <p><strong>Device IP:</strong> 192.168.4.1 | <strong>WiFi:</strong> %s</p>\n"
+        "            <p>© 2025 %s Project</p>\n"
         "        </div>\n"
         "    </div>\n"
-        "    <script>\n"
-        "        // Form submission handling\n"
-        "        document.addEventListener('DOMContentLoaded', function() {\n"
-        "            var form = document.querySelector('form');\n"
-        "            var saveBtn = document.getElementById('saveBtn');\n"
-        "            var saveMessage = document.getElementById('saveMessage');\n"
-        "            \n"
-        "            if (form && saveBtn && saveMessage) {\n"
-        "                form.addEventListener('submit', function(e) {\n"
-        "                    // Disable the save button to prevent double submission\n"
-        "                    saveBtn.disabled = true;\n"
-        "                    saveBtn.textContent = '💾 Saving...';\n"
-        "                    \n"
-        "                    // Show save message after a short delay to allow form submission\n"
-        "                    setTimeout(function() {\n"
-        "                        saveMessage.style.display = 'block';\n"
-        "                        setTimeout(function() {\n"
-        "                            saveMessage.style.display = 'none';\n"
-        "                            // Re-enable button and restore text\n"
-        "                            saveBtn.disabled = false;\n"
-        "                            saveBtn.textContent = '💾 Save Settings';\n"
-        "                        }, 3000);\n"
-        "                    }, 200);\n"
-        "                });\n"
-        "            }\n"
-        "        });\n"
-        "        \n"
-        "        // Update range input displays in real-time\n"
-        "        document.addEventListener('DOMContentLoaded', function() {\n"
-        "            var ranges = document.querySelectorAll('input[type=\"range\"]');\n"
-        "            ranges.forEach(function(range) {\n"
-        "                range.addEventListener('input', function() {\n"
-        "                    var currentValue = this.parentNode.querySelector('.current-value');\n"
-        "                    if (currentValue) {\n"
-        "                        currentValue.textContent = 'Current: ' + this.value + '%%';\n"
-        "                    }\n"
-        "                });\n"
-        "            });\n"
-        "        });\n"
-        "    </script>\n"
         "</body>\n"
-        "</html>\n",
-        DEV_NAME, DEV_NAME, FW_VERSION);
+        "</html>",
+        DEV_NAME, DEV_NAME, FW_VERSION,
+        p_settings ? p_settings->m_ch + 1 : 1,
+        p_settings ? p_settings->m_ch + 1 : 1,
+        p_settings ? p_settings->m_base : 36,
+        p_settings ? p_settings->m_base : 36,
+        (p_settings && p_settings->fast_midi == 0) ? " selected" : "",
+        (p_settings && p_settings->fast_midi == 1) ? " selected" : "",
+        (p_settings && p_settings->fast_midi == 1) ? "High Speed" : "Standard",
+        DEV_NAME, DEV_NAME);
 }
 
 static err_t tcp_close_client_connection(TCP_CONNECT_STATE_T *con_state, struct tcp_pcb *client_pcb, err_t close_err) {
@@ -407,35 +179,7 @@ static int process_settings_form(const char *params) {
         }
     }
     
-    // Parse Sensitivity (0-100)
-    if (extract_param_value(params, "sensitivity", value_str, sizeof(value_str))) {
-        value = atoi(value_str);
-        if (value >= 0 && value <= 100) {
-            p_settings->sensitivity = (uint8_t)value;
-            settings_changed = true;
-            printf("Updated sensitivity to: %d\n", value);
-        }
-    }
-    
-    // Parse Threshold (0-100)  
-    if (extract_param_value(params, "threshold", value_str, sizeof(value_str))) {
-        value = atoi(value_str);
-        if (value >= 0 && value <= 100) {
-            p_settings->threshold = (uint8_t)value;
-            settings_changed = true;
-            printf("Updated threshold to: %d\n", value);
-        }
-    }
-    
-    // Parse Voltage Threshold
-    if (extract_param_value(params, "voltage_threshold", value_str, sizeof(value_str))) {
-        value = atoi(value_str);
-        if (value >= 0 && value <= 65535) {
-            p_settings->voltage_threshold[0] = (uint16_t)value;
-            settings_changed = true;
-            printf("Updated voltage threshold to: %d\n", value);
-        }
-    }
+
 
     
     // Save settings if any changes were made
@@ -460,9 +204,6 @@ static int test_server_content(const char *request, const char *params, char *re
             p_settings->fast_midi = SETTINGS_FAST_MIDI_DEF;
             p_settings->m_ch = SETTINGS_M_CH_DEF;
             p_settings->m_base = SETTINGS_M_BASE_DEF;
-            p_settings->sensitivity = SETTINGS_SENSITIVITY_DEF;
-            p_settings->threshold = SETTINGS_THRESHOLD_DEF;
-            if (p_settings->voltage_threshold) p_settings->voltage_threshold[0] = SETTINGS_VOLTAGE_THRESHOLD_DEF;
             settings_save(p_settings);
         }
         // Handle form submission with settings
