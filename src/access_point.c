@@ -2,6 +2,9 @@
 
 SETTINGS *p_settings;
 
+// Calibration state
+static bool calibration_active = false;
+
 char html_page[HTML_RESULT_SIZE];
 
 void update_html_page() {
@@ -26,6 +29,13 @@ void update_html_page() {
         "        button { background: #007cba; color: white; }\n"
         "        .reset-btn { background: #666; color: white; }\n"
         "        .info { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; color: #888; font-size: 12px; }\n"
+        "        .calibration-section { margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border: 1px solid #e9ecef; }\n"
+        "        .calibration-btn { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }\n"
+        "        .calibration-btn:disabled { background: #6c757d; cursor: not-allowed; }\n"
+        "        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%%; height: 100%%; background-color: rgba(0,0,0,0.5); }\n"
+        "        .modal-content { background-color: #fefefe; margin: 15%% auto; padding: 20px; border-radius: 8px; width: 400px; text-align: center; }\n"
+        "        .modal.show { display: block; }\n"
+        "        .done-btn { background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 10px; }\n"
         "    </style>\n"
         "</head>\n"
         "<body>\n"
@@ -61,6 +71,25 @@ void update_html_page() {
         "            <p>© 2025 %s Project</p>\n"
         "        </div>\n"
         "    </div>\n"
+        "    <!-- Calibration Modal -->\n"
+        "    <div id=\"calibrationModal\" class=\"modal %s\">\n"
+        "        <div class=\"modal-content\">\n"
+        "            <h3>Key Calibration in Progress</h3>\n"
+        "            <p><strong>TEXT-TODO</strong></p>\n"
+        "            <p>Calibration Status: %s</p>\n"
+        "            <button class=\"done-btn\" onclick=\"finishCalibration()\">Done</button>\n"
+        "        </div>\n"
+        "    </div>\n"
+        "    <script>\n"
+        "        function startCalibration() {\n"
+        "            fetch('/settings', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'calibrate=start' })\n"
+        "                .then(() => { document.getElementById('calibrationModal').classList.add('show'); });\n"
+        "        }\n"
+        "        function finishCalibration() {\n"
+        "            fetch('/settings', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'calibrate=done' })\n"
+        "                .then(() => { location.reload(); });\n"
+        "        }\n"
+        "    </script>\n"
         "</body>\n"
         "</html>",
         DEV_NAME, DEV_NAME, FW_VERSION,
@@ -71,7 +100,10 @@ void update_html_page() {
         (p_settings && p_settings->fast_midi == 0) ? " selected" : "",
         (p_settings && p_settings->fast_midi == 1) ? " selected" : "",
         (p_settings && p_settings->fast_midi == 1) ? "High Speed" : "Standard",
-        DEV_NAME, DEV_NAME);
+        calibration_active ? "disabled" : "",
+        DEV_NAME, DEV_NAME,
+        calibration_active ? "show" : "",
+        calibration_active ? "Active" : "Idle");
 }
 
 static err_t tcp_close_client_connection(TCP_CONNECT_STATE_T *con_state, struct tcp_pcb *client_pcb, err_t close_err) {
@@ -176,6 +208,17 @@ static int process_settings_form(const char *params) {
             p_settings->fast_midi = (uint8_t)value;
             settings_changed = true;
             printf("Updated fast MIDI to: %d\n", value);
+        }
+    }
+    
+    // Handle calibration commands
+    if (extract_param_value(params, "calibrate", value_str, sizeof(value_str))) {
+        if (strcmp(value_str, "start") == 0) {
+            calibration_active = true;
+            printf("Calibration started\n");
+        } else if (strcmp(value_str, "done") == 0) {
+            calibration_active = false;
+            printf("Calibration finished\n");
         }
     }
     
@@ -503,6 +546,10 @@ static bool tcp_server_open(void *arg, const char *ap_name) {
 }
 
 // -------------- external ------------
+bool is_calibration_active(void) {
+    return calibration_active;
+}
+
 int wifi_ap_proc(SETTINGS *set) {
     printf("=== Starting WiFi Access Point ===\n");
     p_settings = set;
@@ -577,6 +624,17 @@ int wifi_ap_proc(SETTINGS *set) {
         // Poll for WiFi and lwIP work
         cyw43_arch_poll();
         
+        // Handle calibration loop
+        if (calibration_active) {
+            // TODO: Add actual calibration logic here
+            // This is a placeholder loop that runs while calibration is active
+            printf("Calibration loop running...\n");
+            
+            // Example: You would typically read sensors, process data, etc.
+            // For now, just a small delay to prevent spam
+            sleep_ms(100);
+        }
+        
         // Wait for work or timeout (1 second)
         cyw43_arch_wait_for_work_until(make_timeout_time_ms(1000));
         
@@ -586,6 +644,9 @@ int wifi_ap_proc(SETTINGS *set) {
         if (now - last_heartbeat > 10000) {
             last_heartbeat = now;
             printf("Access Point heartbeat - uptime: %lu seconds\n", now / 1000);
+            if (calibration_active) {
+                printf("Calibration status: Active\n");
+            }
         }
     }
 

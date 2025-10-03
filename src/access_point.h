@@ -43,5 +43,6 @@ typedef struct TCP_CONNECT_STATE_T_ {
 } TCP_CONNECT_STATE_T;
 
 extern int wifi_ap_proc(SETTINGS *set);
+extern bool is_calibration_active(void);
 
 #endif
