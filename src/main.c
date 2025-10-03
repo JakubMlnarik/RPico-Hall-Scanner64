@@ -1,6 +1,6 @@
 #include "pico/stdlib.h"
 #include "pico/multicore.h"
-#include "mcp3008_reader.h"
+#include "hall_scanner.h"
 #include "settings.h"
 #include "midi.h"
 #include "access_point.h"
@@ -70,10 +70,7 @@ int main() {
         printf("%u%s", main_settings.voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
     }
 
-    mcp3008_reader_init();
-
-    // Launch midi_process on core1
-    //multicore_launch_core1(midi_process_core1_entry);
+    hall_scanner_init();
 
     // Initialize and check WiFi button    
     if (init_wifi_button()) {
@@ -88,6 +85,9 @@ int main() {
         // Access point function runs indefinitely, so we won't reach here
         return 0;
     }
+
+    // Launch midi_process on core1
+    multicore_launch_core1(midi_process_core1_entry);
 
     // Main core: read and print MIDI buffer
     // while (true) {

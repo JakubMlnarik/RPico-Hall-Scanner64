@@ -16,7 +16,7 @@ add_executable(my_project
     src/main.c
     src/settings.c
     src/midi.c
-    src/mcp3008_reader.c
+    src/hall_scanner.c
     src/status_dispatcher.c
     src/access_point.c
     src/dhcpserver.c

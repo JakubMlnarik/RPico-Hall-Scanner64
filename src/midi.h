@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include "pico/util/queue.h"
 #include "pico/critical_section.h"
-#include "mcp3008_reader.h"
+#include "hall_scanner.h"
 #include "settings.h"
 #include "midi_defs.h"
 

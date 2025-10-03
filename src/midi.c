@@ -34,12 +34,12 @@ bool midi_send_note_off(uint8_t channel, uint8_t midi_base, int input, critical_
 
 // Process MIDI messages based on sensor inputs
 void midi_process(SETTINGS *set, critical_section_t *cs, queue_t *buff) {
-    uint16_t prev[MCP3008_TOTAL_CHANNELS] = {0};
-    uint16_t curr[MCP3008_TOTAL_CHANNELS] = {0};
+    uint16_t prev[HALL_SCANNER_TOTAL_CHANNELS] = {0};
+    uint16_t curr[HALL_SCANNER_TOTAL_CHANNELS] = {0};
     while (true) {
-        mcp3008_read_all(curr);
+        hall_scanner_read_all(curr);
         printf("%d;%d;%d\n", curr[0], curr[1], curr[2]);
-        /* for (int i = 0; i < MCP3008_TOTAL_CHANNELS; ++i) {
+        /* for (int i = 0; i < HALL_SCANNER_TOTAL_CHANNELS; ++i) {
             if (i < MIDI_NO_TONES) { // I am interested only about the real physical sensors
                 // Example threshold: 100
                 if (curr[i] > 100 && prev[i] <= 100) {
