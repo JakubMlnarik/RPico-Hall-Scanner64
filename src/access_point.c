@@ -63,7 +63,7 @@ void update_html_page() {
         "            </div>\n"
         "            <div class=\"setting\">\n"
         "               <label>Keys trigger point calibration:</label>\n"
-        "               <button class="calibration-btn" onclick="startCalibration()">Start Calibration</button>"
+        "               <button type=\"button\" class=\"calibration-btn\" onclick=\"startCalibration()\">Start Calibration</button>"
         "            </div>\n"
         "            <div class=\"buttons\">\n"
         "                <button type=\"submit\">Save Settings</button>\n"
@@ -630,13 +630,20 @@ int wifi_ap_proc(SETTINGS *set) {
         
         // Handle calibration loop
         if (calibration_active) {
+            static counter = 0;
+
             // TODO: Add actual calibration logic here
             // This is a placeholder loop that runs while calibration is active
-            printf("Calibration loop running...\n");
+            if (counter==500) {
+                printf("Calibration loop running...\n");
+                counter = 0;
+            }
+            
+            counter++;
             
             // Example: You would typically read sensors, process data, etc.
             // For now, just a small delay to prevent spam
-            sleep_ms(100);
+            //sleep_ms(5000);
         }
         
         // Wait for work or timeout (1 second)
