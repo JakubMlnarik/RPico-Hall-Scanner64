@@ -219,12 +219,11 @@ static int process_settings_form(const char *params) {
     if (extract_param_value(params, "calibrate", value_str, sizeof(value_str))) {
         if (strcmp(value_str, "start") == 0) {
             calibration_active = true;
-            calibration_start();
+            calibration_init();
             printf("Calibration started\n");
         } else if (strcmp(value_str, "done") == 0) {
             calibration_active = false;
-            // TODO
-            //calibration_stop();
+            calibration_calculate_and_save(p_settings);
             printf("Calibration finished\n");
         }
     }
@@ -639,18 +638,6 @@ int wifi_ap_proc(SETTINGS *set) {
         
         // Wait for work or timeout (1 second)
         cyw43_arch_wait_for_work_until(make_timeout_time_ms(1000));
-        
-        /* // TODO: edit or remove
-        // Heartbeat message every 10 seconds
-        static uint32_t last_heartbeat = 0;
-        uint32_t now = to_ms_since_boot(get_absolute_time());
-        if (now - last_heartbeat > 10000) {
-            last_heartbeat = now;
-            printf("Access Point heartbeat - uptime: %lu seconds\n", now / 1000);
-            if (calibration_active) {
-                printf("Calibration status: Active\n");
-            }
-        } */
     }
 
     // Cleanup (never reached in normal operation)

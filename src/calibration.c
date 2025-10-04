@@ -6,23 +6,11 @@
 uint16_t keys_max_voltage[HALL_SCANNER_TOTAL_CHANNELS];
 uint16_t keys_min_voltage[HALL_SCANNER_TOTAL_CHANNELS];
 
-// Global variable identifying state of the calibration process
-typedef enum {
-    Started, // Calibration just started
-    InProgress, // Calibration is in progress
-    Stopped, // Calibration is done - a dialog is finished
-    Finished, // Calibration was used and effectively saved
-} CalibrationProcessState;
-
-// Default state is "Finished"
-CalibrationProcessState state = Finished;
-
-void calibration_start(void) {
-    state = Started;
+void calibration_init(void) {
     // Max values are getting higher during calibration, so the init value is low
     for (int i=0; i<HALL_SCANNER_TOTAL_CHANNELS; i++) {
-        keys_max_voltage[i] = MAX_INIT_VALUE;
-        keys_min_voltage[i] = MIN_INIT_VALUE;
+        keys_max_voltage[i] = CALIBRATION_MAX_INIT_VALUE;
+        keys_min_voltage[i] = CALIBRATION_MIN_INIT_VALUE;
     }
 }
 
@@ -45,7 +33,8 @@ void calibration_update_keys_limits(uint32_t actual_time_ms) {
     readout_counter++;
 
     // triggers every SAMPLING_INTERVAL_MS
-    if (actual_time_ms - last_event_time >= SAMPLING_INTERVAL_MS) {
+    if ((actual_time_ms - last_event_time >= CALIBRATION_SAMPLING_INTERVAL_MS) &&
+            (readout_counter > CALIBRATION_MINIMAL_SAMPLES_COUNT)) {
         for (int ch=0; ch<HALL_SCANNER_TOTAL_CHANNELS; ch++) {
             uint16_t res = (uint16_t)(voltage_sum[ch] / readout_counter);
             // Clear voltage_sum buffer after use
@@ -57,9 +46,37 @@ void calibration_update_keys_limits(uint32_t actual_time_ms) {
         }
 
         //TODO: remove prints
-        printf("Counter: %d, Max: %d, Min: %d", readout_counter, keys_max_voltage[0], keys_min_voltage[0]);
+        printf("Counter: %d, Max: %d, Min: %d\n", readout_counter, keys_max_voltage[0], keys_min_voltage[0]);
 
         readout_counter = 0;
         last_event_time = actual_time_ms;
     }
+}
+
+void calibration_calculate_and_save(SETTINGS *set) {
+    for (int t=0; t<MIDI_NO_TONES; t++) {
+        // calculate delta voltage
+        uint16_t voltage_delta = 0;
+        if (keys_max_voltage[t] > keys_min_voltage[t]) {
+            voltage_delta = keys_max_voltage[t] - keys_min_voltage[t];
+        }
+
+        // Tone pressed detection
+        if (voltage_delta > CALIBRATION_MINIMAL_DELTA) {
+            // Valid calibration
+            set->voltage_threshold[t] = (keys_max_voltage[t] + keys_min_voltage[t]) / 2; // In the middle between limits
+            set->voltage_span[t] = voltage_delta;
+        }
+    }
+
+    printf("  voltage_threshold: [");
+    for (int i = 0; i < MIDI_NO_TONES; ++i) {
+        printf("%u%s", set->voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+    }
+    printf("  voltage_span: [");
+    for (int i = 0; i < MIDI_NO_TONES; ++i) {
+        printf("%u%s", set->voltage_span[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+    }
+
+    settings_save(set);
 }

@@ -30,11 +30,8 @@ typedef struct SETTINGS_ {
     // Voltage threshold for note detection
     uint16_t voltage_threshold[MIDI_NO_TONES];
 
-    // Sensitivity factor - to calculate velocity from voltage difference (0-100%)
-    uint8_t sensitivity;
-
-    // Threshold for note on detection (0-100%): 0 = always on, 100 = never on
-    uint8_t threshold;
+    // Voltage span per each key (delta between pressed and released state)
+    uint16_t voltage_span[MIDI_NO_TONES];
 } SETTINGS;
 
 // default values
@@ -45,9 +42,9 @@ typedef struct SETTINGS_ {
 #define SETTINGS_FAST_MIDI_DEF 0
 #define SETTINGS_M_CH_DEF 0
 #define SETTINGS_M_BASE_DEF 36
-#define SETTINGS_SENSITIVITY_DEF 50
-#define SETTINGS_THRESHOLD_DEF 30
-#define SETTINGS_VOLTAGE_THRESHOLD_DEF 1000
+// TODO: change to reasonable value for a real Hall PCB and  bit MCP3008
+#define SETTINGS_VOLTAGE_THRESHOLD_DEF 2800
+#define SETTINGS_VOLTAGE_SPAN_DEF 800
 
 
 extern void settings_load(SETTINGS *set);

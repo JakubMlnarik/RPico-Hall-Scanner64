@@ -29,10 +29,9 @@ void settings_load(SETTINGS *set) {
             set->fast_midi = SETTINGS_FAST_MIDI_DEF;
             set->m_ch = SETTINGS_M_CH_DEF;
             set->m_base = SETTINGS_M_BASE_DEF;
-            set->sensitivity = SETTINGS_SENSITIVITY_DEF;
-            set->threshold = SETTINGS_THRESHOLD_DEF;
             for (int i = 0; i < MIDI_NO_TONES; ++i) {
                 set->voltage_threshold[i] = SETTINGS_VOLTAGE_THRESHOLD_DEF;
+                set->voltage_span[i] = SETTINGS_VOLTAGE_SPAN_DEF;
             }
             settings_save(set);
     }
