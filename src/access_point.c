@@ -624,36 +624,35 @@ int wifi_ap_proc(SETTINGS *set) {
     printf("===============================\n\n");
 
     // Main server loop
-    #include "pico/stdlib.h"
-    #include "pico/cyw43_arch.h"
-
-    while (1) {
-        // Record start time of the loop
-        absolute_time_t start_time = get_absolute_time();
-
+    // One iteration takes typically 100 ms
+    while(1) {
         // Poll for WiFi and lwIP work
         cyw43_arch_poll();
-
+        
         // Handle calibration loop
         if (calibration_active) {
             static int counter = 0;
 
             // TODO: Add actual calibration logic here
-            if (counter == 500) {
+            // This is a placeholder loop that runs while calibration is active
+            if (counter==500) {
                 printf("Calibration loop running...\n");
                 counter = 0;
             }
-
+            
             counter++;
-            // Optional delay
-            // sleep_ms(5000);
+            
+            // Example: You would typically read sensors, process data, etc.
+            // For now, just a small delay to prevent spam
+            //sleep_ms(5000);
         }
-
+        
         // Wait for work or timeout (1 second)
         cyw43_arch_wait_for_work_until(make_timeout_time_ms(1000));
-
+        
+        /* // TODO: edit or remove
         // Heartbeat message every 10 seconds
-        /* static uint32_t last_heartbeat = 0;
+        static uint32_t last_heartbeat = 0;
         uint32_t now = to_ms_since_boot(get_absolute_time());
         if (now - last_heartbeat > 10000) {
             last_heartbeat = now;
@@ -662,13 +661,7 @@ int wifi_ap_proc(SETTINGS *set) {
                 printf("Calibration status: Active\n");
             }
         } */
-
-        // Record end time and calculate delta
-        absolute_time_t end_time = get_absolute_time();
-        int64_t delta_us = absolute_time_diff_us(start_time, end_time);
-        printf("Loop iteration time: %lld microseconds\n", delta_us);
     }
-
 
     // Cleanup (never reached in normal operation)
     dhcp_server_deinit(&dhcp_server);

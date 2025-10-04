@@ -17,6 +17,7 @@ add_executable(my_project
     src/settings.c
     src/midi.c
     src/hall_scanner.c
+    src/calibration.c
     src/status_dispatcher.c
     src/access_point.c
     src/dhcpserver.c
