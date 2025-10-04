@@ -30,7 +30,7 @@ void calibration_start(void) {
 // Every iteration takes cca 100 ms
 // It creates an average from 5 previous values
 void calibration_update_keys_limits(void) {
-    static uint16_t buffer[READOUTS_PER_SAMPLE][HALL_SCANNER_TOTAL_CHANNELS] = {0};
+    static uint16_t buffer[READOUTS_PER_SAMPLE][HALL_SCANNER_TOTAL_CHANNELS];
 
     static int readout_counter = 0; // This holds readout number for average calculation
     
@@ -39,9 +39,9 @@ void calibration_update_keys_limits(void) {
 
     // Calculate average and set limits every N iteration
     if (readout_counter == (READOUTS_PER_SAMPLE - 1)) {
-        for (int ch; ch<HALL_SCANNER_TOTAL_CHANNELS; ch++) {
+        for (int ch=0; ch<HALL_SCANNER_TOTAL_CHANNELS; ch++) {
             uint32_t sum = 0;
-            for (int r; r<READOUTS_PER_SAMPLE; r++) {
+            for (int r=0; r<READOUTS_PER_SAMPLE; r++) {
                 sum = sum + buffer[r][ch]; 
             }
             uint16_t res = (uint16_t)(sum / READOUTS_PER_SAMPLE);
@@ -51,7 +51,7 @@ void calibration_update_keys_limits(void) {
 
             //temprary oprint
             if (ch<4) {
-                printf("Channel: %d, Max: %d, Min: %d\n", ch, keys_max_voltage[ch], keys_min_voltage[ch]);
+                printf("Sum: %d, Result: %d, Channel: %d, Max: %d, Min: %d\n", sum, res, ch, keys_max_voltage[ch], keys_min_voltage[ch]);
             }
         }
     }

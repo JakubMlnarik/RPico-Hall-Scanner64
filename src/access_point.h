@@ -13,6 +13,7 @@
 #include "dnsserver.h"
 
 #include "settings.h"
+#include "calibration.h"
 
 #define DEV_NAME "Hall Scanner"
 #define FW_VERSION "1.0.0"

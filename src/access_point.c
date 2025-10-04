@@ -219,9 +219,12 @@ static int process_settings_form(const char *params) {
     if (extract_param_value(params, "calibrate", value_str, sizeof(value_str))) {
         if (strcmp(value_str, "start") == 0) {
             calibration_active = true;
+            calibration_start();
             printf("Calibration started\n");
         } else if (strcmp(value_str, "done") == 0) {
             calibration_active = false;
+            // TODO
+            //calibration_stop();
             printf("Calibration finished\n");
         }
     }
@@ -631,20 +634,7 @@ int wifi_ap_proc(SETTINGS *set) {
         
         // Handle calibration loop
         if (calibration_active) {
-            static int counter = 0;
-
-            // TODO: Add actual calibration logic here
-            // This is a placeholder loop that runs while calibration is active
-            if (counter==500) {
-                printf("Calibration loop running...\n");
-                counter = 0;
-            }
-            
-            counter++;
-            
-            // Example: You would typically read sensors, process data, etc.
-            // For now, just a small delay to prevent spam
-            //sleep_ms(5000);
+            calibration_update_keys_limits();
         }
         
         // Wait for work or timeout (1 second)

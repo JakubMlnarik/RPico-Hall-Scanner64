@@ -72,8 +72,10 @@ int main() {
 
     hall_scanner_init();
 
-    // Initialize and check WiFi button    
-    if (init_wifi_button()) {
+    // Initialize and check WiFi button  
+    // TODO  
+    //if (init_wifi_button()) {
+    if (true) {
         printf("WiFi button pressed - starting Access Point mode\n");
         
         // Load settings from flash (needed for access point)
