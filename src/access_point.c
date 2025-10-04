@@ -634,7 +634,7 @@ int wifi_ap_proc(SETTINGS *set) {
         
         // Handle calibration loop
         if (calibration_active) {
-            calibration_update_keys_limits();
+            calibration_update_keys_limits(to_ms_since_boot(get_absolute_time()));
         }
         
         // Wait for work or timeout (1 second)

@@ -29,32 +29,37 @@ void calibration_start(void) {
 // This is invoked from an access_point module loop
 // Every iteration takes cca 100 ms
 // It creates an average from 5 previous values
-void calibration_update_keys_limits(void) {
-    static uint16_t buffer[READOUTS_PER_SAMPLE][HALL_SCANNER_TOTAL_CHANNELS];
-
-    static int readout_counter = 0; // This holds readout number for average calculation
+void calibration_update_keys_limits(uint32_t actual_time_ms) {
+    static uint32_t voltage_sum[HALL_SCANNER_TOTAL_CHANNELS] = {0};
+    static uint32_t readout_counter = 0; // This holds readout number for average calculation
+    static uint32_t last_event_time = 0;
     
     // Read all sensors into buffer
-    hall_scanner_read_all(buffer[readout_counter]);
+    uint16_t curr[HALL_SCANNER_TOTAL_CHANNELS] = {0};
+    hall_scanner_read_all(curr);
+    
+    for (int ch=0; ch<HALL_SCANNER_TOTAL_CHANNELS; ch++) {
+        voltage_sum[ch] = voltage_sum[ch] + curr[ch];
+    }
 
-    // Calculate average and set limits every N iteration
-    if (readout_counter == (READOUTS_PER_SAMPLE - 1)) {
+    readout_counter++;
+
+    // triggers every SAMPLING_INTERVAL_MS
+    if (actual_time_ms - last_event_time >= SAMPLING_INTERVAL_MS) {
         for (int ch=0; ch<HALL_SCANNER_TOTAL_CHANNELS; ch++) {
-            uint32_t sum = 0;
-            for (int r=0; r<READOUTS_PER_SAMPLE; r++) {
-                sum = sum + buffer[r][ch]; 
-            }
-            uint16_t res = (uint16_t)(sum / READOUTS_PER_SAMPLE);
+            uint16_t res = (uint16_t)(voltage_sum[ch] / readout_counter);
+            // Clear voltage_sum buffer after use
+            voltage_sum[ch] = 0;
+
             // Set limits
             if (keys_max_voltage[ch] < res) keys_max_voltage[ch] = res;
             if (keys_min_voltage[ch] > res) keys_min_voltage[ch] = res;
-
-            //temprary oprint
-            if (ch<4) {
-                printf("Sum: %d, Result: %d, Channel: %d, Max: %d, Min: %d\n", sum, res, ch, keys_max_voltage[ch], keys_min_voltage[ch]);
-            }
         }
-    }
 
-    readout_counter = (readout_counter + 1) % READOUTS_PER_SAMPLE;
+        //TODO: remove prints
+        printf("Counter: %d, Max: %d, Min: %d", readout_counter, keys_max_voltage[0], keys_min_voltage[0]);
+
+        readout_counter = 0;
+        last_event_time = actual_time_ms;
+    }
 }
