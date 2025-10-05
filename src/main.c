@@ -75,9 +75,7 @@ int main() {
     hall_scanner_init();
 
     // Initialize and check WiFi button  
-    // TODO  
-    //if (init_wifi_button()) {
-    if (true) {
+    if (init_wifi_button()) {
         printf("WiFi button pressed - starting Access Point mode\n");
         
         // Load settings from flash (needed for access point)
@@ -90,22 +88,32 @@ int main() {
         return 0;
     }
 
+    // Normal mode
+        // Slow LED blinking
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+    sleep_ms(50);
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+    sleep_ms(50);
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+    sleep_ms(50);
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
+
     // Launch midi_process on core1
     multicore_launch_core1(midi_process_core1_entry);
 
-    // Main core: read and print MIDI buffer
-    // while (true) {
-    //     // Lock critical section before accessing the queue
-    //     critical_section_enter_blocking(&cs_lock);
-    //     while (!queue_is_empty(&shared_midi_buff)) {
-    //         uint8_t val;
-    //         if (queue_try_remove(&shared_midi_buff, &val)) {
-    //             printf("MIDI: %u\n", val);
-    //         }
-    //     }
-    //     critical_section_exit(&cs_lock);
-    //     sleep_ms(1000);
-    // }
+    // Main core loop
+    while (true) {
+        // Lock critical section before accessing the queue
+        critical_section_enter_blocking(&cs_lock);
+        while (!queue_is_empty(&shared_midi_buff)) {
+            uint8_t val;
+            if (queue_try_remove(&shared_midi_buff, &val)) {
+                printf("MIDI: %u\n", val);
+            }
+        }
+        critical_section_exit(&cs_lock);
+        sleep_ms(1000);
+    }
 
     return 0;
 }

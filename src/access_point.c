@@ -557,6 +557,9 @@ bool is_calibration_active(void) {
 }
 
 int wifi_ap_proc(SETTINGS *set) {
+    // Turn ON onboard LED
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
+
     printf("=== Starting WiFi Access Point ===\n");
     p_settings = set;
 
