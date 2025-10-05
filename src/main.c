@@ -41,9 +41,13 @@ bool init_wifi_button() {
 int main() {
     // Initialize stdio for USB serial communication
     stdio_init_all();
-    
-    // Wait a bit for USB to be ready
-    sleep_ms(2000);
+
+    // Initialize CYW43 architecture
+    if (cyw43_arch_init()) {
+        printf("ERROR: Failed to initialize CYW43 architecture\n");
+        return -1;
+    }
+    printf("✓ CYW43 architecture initialized\n");
     
     printf("Starting RPico Hall Scanner...\n");
     
@@ -89,7 +93,7 @@ int main() {
     }
 
     // Normal mode
-        // Slow LED blinking
+    // LED blinking
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
     sleep_ms(50);
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
@@ -108,11 +112,11 @@ int main() {
         while (!queue_is_empty(&shared_midi_buff)) {
             uint8_t val;
             if (queue_try_remove(&shared_midi_buff, &val)) {
-                printf("MIDI: %u\n", val);
             }
         }
         critical_section_exit(&cs_lock);
-        sleep_ms(1000);
+        // TODO: remove this
+        sleep_ms(10);
     }
 
     return 0;

@@ -563,13 +563,6 @@ int wifi_ap_proc(SETTINGS *set) {
     printf("=== Starting WiFi Access Point ===\n");
     p_settings = set;
 
-    // Initialize CYW43 architecture
-    if (cyw43_arch_init()) {
-        printf("ERROR: Failed to initialize CYW43 architecture\n");
-        return -1;
-    }
-    printf("✓ CYW43 architecture initialized\n");
-
     // Allocate server state
     TCP_SERVER_T *state = calloc(1, sizeof(TCP_SERVER_T));
     if (!state) {

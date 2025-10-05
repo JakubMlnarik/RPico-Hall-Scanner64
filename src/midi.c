@@ -34,15 +34,19 @@ bool midi_send_note_off(uint8_t channel, uint8_t midi_base, int input, critical_
 
 // Process MIDI messages based on sensor inputs
 void midi_process(SETTINGS *set, critical_section_t *cs, queue_t *buff) {
-    uint16_t prev[HALL_SCANNER_TOTAL_CHANNELS] = {0};
+    static uint16_t prev[HALL_SCANNER_TOTAL_CHANNELS] = {0};
     uint16_t curr[HALL_SCANNER_TOTAL_CHANNELS] = {0};
     while (true) {
         hall_scanner_read_all(curr);
-        for (int i = 0; i < HALL_SCANNER_TOTAL_CHANNELS; ++i) {
+        // TODO!!!!
+        //for (int i = 0; i < HALL_SCANNER_TOTAL_CHANNELS; ++i) {
+        for (int i = 0; i < 3; ++i) {
             if (i < MIDI_NO_TONES) { // I am interested only about the real physical sensors
                 if (curr[i] > set->voltage_threshold[i] && prev[i] <= set->voltage_threshold[i]) {
+                    printf("NOTE ON: %d\n", i);
                     midi_send_note_on(set->m_ch, set->m_base, i, 127, cs, buff);
                 } else if (curr[i] <= set->voltage_threshold[i] && prev[i] > set->voltage_threshold[i]) {
+                    printf("NOTE OFF: %d\n", i);
                     midi_send_note_off(set->m_ch, set->m_base, i, cs, buff);
                 }
             }
