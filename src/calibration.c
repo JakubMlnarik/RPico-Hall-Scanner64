@@ -22,6 +22,14 @@ void calibration_update_keys_limits(uint32_t actual_time_ms) {
     static uint32_t readout_counter = 0; // This holds readout number for average calculation
     static uint32_t last_event_time = 0;
     
+    // Overflow protection - reset counter and voltage sums before overflow
+    if (readout_counter >= UINT32_MAX - 1000) {
+        readout_counter = 0;
+        for (int ch = 0; ch < HALL_SCANNER_TOTAL_CHANNELS; ch++) {
+            voltage_sum[ch] = 0;
+        }
+    }
+    
     // Read all sensors into buffer
     uint16_t curr[HALL_SCANNER_TOTAL_CHANNELS] = {0};
     hall_scanner_read_all(curr);
