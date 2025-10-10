@@ -1,6 +1,7 @@
 #include "hall_scanner.h"
 #include "hardware/spi.h"
 #include "pico/stdlib.h"
+#include <stdio.h>
 
 // TODO: TEMPORARY - Using MCP3208 instead of MCP3008
 static const uint8_t cs_pins[8] = HALL_SCANNER_CS_PINS;
@@ -19,32 +20,41 @@ void hall_scanner_init(void) {
 }
 
 // TODO: TEMPORARY - Modified for MCP3208 (12-bit instead of 10-bit)
-static uint16_t hall_scanner_read_channel(uint8_t chip, uint8_t channel) {
-    uint8_t cs = cs_pins[chip];  // Fixed: direct mapping instead of division
+static uint16_t mcp3008_read_channel(int chip_index, int channel) {
+    // MCP3008 SPI protocol:
+    // Send: 1 byte start (0x01), 1 byte command, 1 byte dummy
+    // Command byte: bit 7 = start bit, bit 6 = single/diff, bits 5-3 = channel, bits 2-0 = don't care
     
-    gpio_put(cs, 0);
-    sleep_us(1);  // Ensure tCSS timing (1µs >> 100ns required by MCP3208)
+    uint8_t tx_buf[3];
+    uint8_t rx_buf[3];
     
-    // MCP3208 SPI command format (same as MCP3008 but expecting 12-bit result)
-    uint8_t tx[] = {
-        0x06 | ((channel & 0x04) >> 2),  // Start bit + SGL/DIFF + D2
-        (channel & 0x03) << 6,          // D1 + D0 + don't care bits
-        0x00                            // Don't care
-    };
-    uint8_t rx[3];
-    spi_write_read_blocking(HALL_SCANNER_SPI_PORT, tx, rx, 3);
+    tx_buf[0] = 0x01;  // Start bit
+    tx_buf[1] = 0x80 | (channel << 4);  // Single-ended mode + channel select
+    tx_buf[2] = 0x00;  // Dummy byte
     
-    sleep_us(1);  // Ensure tCSH timing (1µs >> 100ns required by MCP3208)
-    gpio_put(cs, 1);
-    // MCP3208 returns 12-bit result (instead of 10-bit for MCP3008)
-    uint16_t result = ((rx[1] & 0x0F) << 8) | rx[2];  // Extract 12-bit value
-    return result;
+    gpio_put(cs_pins[chip_index], 0);  // Select chip
+    spi_write_read_blocking(HALL_SCANNER_SPI_PORT, tx_buf, rx_buf, 3);
+    gpio_put(cs_pins[chip_index], 1);  // Deselect chip
+    
+    // Extract 10-bit result from rx_buf[1] and rx_buf[2]
+    // MCP3008 returns: rx_buf[1] = X X X X X b9 b8 b7, rx_buf[2] = b6 b5 b4 b3 b2 b1 b0 X
+    uint16_t result = ((rx_buf[1] & 0x03) << 8) | rx_buf[2];
+    
+    return result;  // 10-bit value (0-1023)
 }
 
 void hall_scanner_read_all(uint16_t *values) {
     for (uint8_t chip = 0; chip < HALL_SCANNER_NUM_AD_CHIPS; ++chip) {
         for (uint8_t ch = 0; ch < HALL_SCANNER_CHANNELS_PER_AD_CHIP; ++ch) {
-            values[chip * HALL_SCANNER_CHANNELS_PER_AD_CHIP + ch] = hall_scanner_read_channel(chip, ch);
+            values[chip * HALL_SCANNER_CHANNELS_PER_AD_CHIP + ch] = mcp3008_read_channel(chip, ch);
         }
     }
+    
+    // Print all read values for debugging
+    printf("Hall scanner values: ");
+    for (int i = 0; i < HALL_SCANNER_TOTAL_CHANNELS; i++) {
+        printf("%u ", values[i]);
+        if ((i + 1) % 8 == 0) printf("| "); // Separate chips with |
+    }
+    printf("\n");
 }
