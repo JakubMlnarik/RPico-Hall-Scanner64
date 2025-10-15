@@ -3,7 +3,6 @@
 #include "pico/stdlib.h"
 #include <stdio.h>
 
-// TODO: TEMPORARY - Using MCP3208 instead of MCP3008
 static const uint8_t cs_pins[8] = HALL_SCANNER_CS_PINS;
 
 void hall_scanner_init(void) {
@@ -19,7 +18,6 @@ void hall_scanner_init(void) {
     }
 }
 
-// TODO: TEMPORARY - Modified for MCP3208 (12-bit instead of 10-bit)
 static uint16_t mcp3008_read_channel(int chip_index, int channel) {
     // MCP3008 SPI protocol:
     // Send: 1 byte start (0x01), 1 byte command, 1 byte dummy
@@ -46,32 +44,9 @@ static uint16_t mcp3008_read_channel(int chip_index, int channel) {
 #include "pico/time.h"
 
 void hall_scanner_read_all(uint16_t *values) {
-    absolute_time_t start = get_absolute_time();
-
     for (uint8_t chip = 0; chip < HALL_SCANNER_NUM_AD_CHIPS; ++chip) {
         for (uint8_t ch = 0; ch < HALL_SCANNER_CHANNELS_PER_AD_CHIP; ++ch) {
             values[chip * HALL_SCANNER_CHANNELS_PER_AD_CHIP + ch] = mcp3008_read_channel(chip, ch);
         }
     }
-
-    static int count = 0;
-    static int64_t total_us = 0;
-
-    int64_t elapsed = absolute_time_diff_us(start, get_absolute_time());
-    total_us += elapsed;
-    count++;
-
-    if (count == 100) {
-        printf("Average hall_scanner_read_all time: %.2f us\n", total_us / 100.0);
-        count = 0;
-        total_us = 0;
-    }
-
-    // Print all read values for debugging
-    // printf("Hall scanner values: ");
-    // for (int i = 0; i < HALL_SCANNER_TOTAL_CHANNELS; i++) {
-    //     printf("%u ", values[i]);
-    //     if ((i + 1) % 8 == 0) printf("| "); // Separate chips with |
-    // }
-    // printf("\n");
 }

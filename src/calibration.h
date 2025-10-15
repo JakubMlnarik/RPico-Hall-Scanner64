@@ -8,7 +8,7 @@
 
 // Max values are getting higher during calibration, so the init value is low
 #define CALIBRATION_MAX_INIT_VALUE 0
-#define CALIBRATION_MIN_INIT_VALUE 3500
+#define CALIBRATION_MIN_INIT_VALUE 1023
 
 // To calculate arithmetic average from unknown number of values in given period 
 #define CALIBRATION_SAMPLING_INTERVAL_MS 500
@@ -16,9 +16,8 @@
 // Minimal number of samples collected to calculate the average
 #define CALIBRATION_MINIMAL_SAMPLES_COUNT 3
 
-// TODO: adjust better
 // Minimal valid delta between max and min measured value. It enables to recognize if a tone was pressed during calibration. 
-#define CALIBRATION_MINIMAL_DELTA 200
+#define CALIBRATION_MINIMAL_DELTA 50
 
 // Start calibration process
 void calibration_init(void);
