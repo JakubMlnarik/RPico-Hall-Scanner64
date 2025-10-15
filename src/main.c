@@ -67,13 +67,13 @@ int main() {
     printf("  fast_midi: %u\n", main_settings.fast_midi);
     printf("  m_ch: %u\n", main_settings.m_ch);
     printf("  m_base: %u\n", main_settings.m_base);
-    printf("  voltage_threshold: [");
+    printf("  on_voltage_threshold: [");
     for (int i = 0; i < MIDI_NO_TONES; ++i) {
-        printf("%u%s", main_settings.voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+        printf("%u%s", main_settings.on_voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
     }
-    printf("  voltage_span: [");
+    printf("  off_voltage_threshold: [");
     for (int i = 0; i < MIDI_NO_TONES; ++i) {
-        printf("%u%s", main_settings.voltage_span[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+        printf("%u%s", main_settings.off_voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
     }
 
     hall_scanner_init();

@@ -38,14 +38,12 @@ void midi_process(SETTINGS *set, critical_section_t *cs, queue_t *buff) {
     uint16_t curr[HALL_SCANNER_TOTAL_CHANNELS] = {0};
     while (true) {
         hall_scanner_read_all(curr);
-        // TODO!!!!
-        //for (int i = 0; i < HALL_SCANNER_TOTAL_CHANNELS; ++i) {
-        for (int i = 0; i < 3; ++i) {
+        for (int i = 0; i < HALL_SCANNER_TOTAL_CHANNELS; ++i) {
             if (i < MIDI_NO_TONES) { // I am interested only about the real physical sensors
-                if (curr[i] > set->voltage_threshold[i] && prev[i] <= set->voltage_threshold[i]) {
+                if (curr[i] > set->on_voltage_threshold[i] && prev[i] <= set->on_voltage_threshold[i]) {
                     printf("NOTE ON: %d\n", i);
                     midi_send_note_on(set->m_ch, set->m_base, i, 127, cs, buff);
-                } else if (curr[i] <= set->voltage_threshold[i] && prev[i] > set->voltage_threshold[i]) {
+                } else if (curr[i] <= set->off_voltage_threshold[i] && prev[i] > set->off_voltage_threshold[i]) {
                     printf("NOTE OFF: %d\n", i);
                     midi_send_note_off(set->m_ch, set->m_base, i, cs, buff);
                 }

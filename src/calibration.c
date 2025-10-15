@@ -72,18 +72,18 @@ void calibration_calculate_and_save(SETTINGS *set) {
         // Tone pressed detection
         if (voltage_delta > CALIBRATION_MINIMAL_DELTA) {
             // Valid calibration
-            set->voltage_threshold[t] = (keys_max_voltage[t] + keys_min_voltage[t]) / 2; // In the middle between limits
-            set->voltage_span[t] = voltage_delta;
+            set->on_voltage_threshold[t] = (keys_max_voltage[t] + keys_min_voltage[t]) / 2; // In the middle between limits
+            set->off_voltage_threshold[t] = set->on_voltage_threshold[t] - (voltage_delta * SETTINGS_ON_OFF_HYSTERESIS_PERCENTAGE) / 100;
         }
     }
 
-    printf("  voltage_threshold: [");
+    printf("  on_voltage_threshold: [");
     for (int i = 0; i < MIDI_NO_TONES; ++i) {
-        printf("%u%s", set->voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+        printf("%u%s", set->on_voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
     }
-    printf("  voltage_span: [");
+    printf("  off_voltage_threshold: [");
     for (int i = 0; i < MIDI_NO_TONES; ++i) {
-        printf("%u%s", set->voltage_span[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+        printf("%u%s", set->off_voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
     }
 
     settings_save(set);
