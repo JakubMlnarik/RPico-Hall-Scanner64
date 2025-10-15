@@ -38,8 +38,8 @@ void midi_process(SETTINGS *set, critical_section_t *cs, queue_t *buff) {
     uint16_t curr[HALL_SCANNER_TOTAL_CHANNELS] = {0};
     static bool on_state[HALL_SCANNER_TOTAL_CHANNELS] = {false};
 
-    // FIFO buffer for last 15 values of channel 0
-    #define FIFO_SIZE 15
+    // FIFO buffer for last 10 values of channel 0
+    #define FIFO_SIZE 20
     static uint16_t fifo[FIFO_SIZE] = {0};
     static int fifo_index = 0;
     static int fifo_count = 0;
@@ -59,13 +59,13 @@ void midi_process(SETTINGS *set, critical_section_t *cs, queue_t *buff) {
                     midi_send_note_on(set->m_ch, set->m_base, i, 127, cs, buff);
                     on_state[i] = true;
 
-                    // Print FIFO buffer for channel 0 only when note on is detected
-                    printf("Last %d voltages for channel 0: ", fifo_count);
+                    uint32_t vel = 0;
+                    // Print velocity
                     for (int j = 0; j < fifo_count; ++j) {
                         int idx = (fifo_index + j) % FIFO_SIZE;
-                        printf("%u ", fifo[idx]);
+                        vel = vel + fifo[idx];
                     }
-                    printf("\n");
+                    printf("Velocity integral: %d\n", vel);
                 } else if (curr[i] <= set->off_voltage_threshold[i] && prev[i] > set->off_voltage_threshold[i] && on_state[i] == true) {
                     printf("NOTE OFF: %d\n", i);
                     midi_send_note_off(set->m_ch, set->m_base, i, cs, buff);
