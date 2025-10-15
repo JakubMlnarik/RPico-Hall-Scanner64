@@ -36,16 +36,19 @@ bool midi_send_note_off(uint8_t channel, uint8_t midi_base, int input, critical_
 void midi_process(SETTINGS *set, critical_section_t *cs, queue_t *buff) {
     static uint16_t prev[HALL_SCANNER_TOTAL_CHANNELS] = {0};
     uint16_t curr[HALL_SCANNER_TOTAL_CHANNELS] = {0};
+    static bool on_state[HALL_SCANNER_TOTAL_CHANNELS] = {false};
     while (true) {
         hall_scanner_read_all(curr);
         for (int i = 0; i < HALL_SCANNER_TOTAL_CHANNELS; ++i) {
             if (i < MIDI_NO_TONES) { // I am interested only about the real physical sensors
-                if (curr[i] > set->on_voltage_threshold[i] && prev[i] <= set->on_voltage_threshold[i]) {
+                if (curr[i] > set->on_voltage_threshold[i] && prev[i] <= set->on_voltage_threshold[i] && on_state[i] == false) {
                     printf("NOTE ON: %d\n", i);
                     midi_send_note_on(set->m_ch, set->m_base, i, 127, cs, buff);
-                } else if (curr[i] <= set->off_voltage_threshold[i] && prev[i] > set->off_voltage_threshold[i]) {
+                    on_state[i] = true;
+                } else if (curr[i] <= set->off_voltage_threshold[i] && prev[i] > set->off_voltage_threshold[i] && on_state[i] == true) {
                     printf("NOTE OFF: %d\n", i);
                     midi_send_note_off(set->m_ch, set->m_base, i, cs, buff);
+                    on_state[i] = false;
                 }
             }
             

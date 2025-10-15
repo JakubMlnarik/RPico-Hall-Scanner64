@@ -72,8 +72,8 @@ void calibration_calculate_and_save(SETTINGS *set) {
         // Tone pressed detection
         if (voltage_delta > CALIBRATION_MINIMAL_DELTA) {
             // Valid calibration
-            set->on_voltage_threshold[t] = (keys_max_voltage[t] + keys_min_voltage[t]) / 2; // In the middle between limits
-            set->off_voltage_threshold[t] = set->on_voltage_threshold[t] - (voltage_delta * SETTINGS_ON_OFF_HYSTERESIS_PERCENTAGE) / 100;
+            set->off_voltage_threshold[t] = (keys_max_voltage[t] + keys_min_voltage[t]) / 2; // In the middle between limits
+            set->on_voltage_threshold[t] = set->off_voltage_threshold[t] + (voltage_delta * SETTINGS_ON_OFF_HYSTERESIS_PERCENTAGE) / 100;
         }
     }
 
