@@ -27,11 +27,12 @@ typedef struct SETTINGS_ {
     uint8_t m_ch;       // MIDI channel
     uint8_t m_base;     // Base MIDI note
 
-    // Voltage threshold for note on detection
-    uint16_t on_voltage_threshold[MIDI_NO_TONES];
+    // Voltage of the pressed key
+    uint16_t pressed_voltage[MIDI_NO_TONES];
 
-    // Voltage threshold for note off detection
-    uint16_t off_voltage_threshold[MIDI_NO_TONES];
+    // Voltage of the released key
+    uint16_t released_voltage[MIDI_NO_TONES];
+
 } SETTINGS;
 
 // default values
@@ -42,11 +43,8 @@ typedef struct SETTINGS_ {
 #define SETTINGS_FAST_MIDI_DEF 0
 #define SETTINGS_M_CH_DEF 0
 #define SETTINGS_M_BASE_DEF 36
-// NOTE ON / NOTE OFF hysteresis (in percentage of the total span of analog values)
-#define SETTINGS_ON_OFF_HYSTERESIS_PERCENTAGE 10
-#define SETTINGS_ON_VOLTAGE_THRESHOLD_DEF 600
-#define SETTINGS_OFF_VOLTAGE_THRESHOLD_DEF 590
-
+#define SETTINGS_RELEASED_VOLTAGE_DEF 500
+#define SETTINGS_PRESSED_VOLTAGE_DEF 700
 
 extern void settings_load(SETTINGS *set);
 extern void settings_save(SETTINGS *set);

@@ -30,8 +30,8 @@ void settings_load(SETTINGS *set) {
             set->m_ch = SETTINGS_M_CH_DEF;
             set->m_base = SETTINGS_M_BASE_DEF;
             for (int i = 0; i < MIDI_NO_TONES; ++i) {
-                set->on_voltage_threshold[i] = SETTINGS_ON_VOLTAGE_THRESHOLD_DEF;
-                set->off_voltage_threshold[i] = SETTINGS_OFF_VOLTAGE_THRESHOLD_DEF;
+                set->released_voltage[i] = SETTINGS_RELEASED_VOLTAGE_DEF;
+                set->pressed_voltage[i] = SETTINGS_PRESSED_VOLTAGE_DEF;
             }
             settings_save(set);
     }

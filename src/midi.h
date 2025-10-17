@@ -7,6 +7,9 @@
 #include "settings.h"
 #include "midi_defs.h"
 
+// NOTE ON / NOTE OFF hysteresis (in percentage of the total span of analog values)
+#define MIDI_ON_OFF_HYSTERESIS_PERCENTAGE 10
+
 // MIDI API
 bool midi_send_msg(uint8_t *data, int no_bytes, critical_section_t *cs, queue_t *buff);
 bool midi_send_note_on(uint8_t channel, uint8_t midi_base, int input, uint8_t velocity, critical_section_t *cs, queue_t *buff);

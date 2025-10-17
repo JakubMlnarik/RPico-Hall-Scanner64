@@ -16,7 +16,7 @@ void calibration_init(void) {
 
 // This is invoked from an access_point module loop
 // Every iteration takes cca 100 ms
-// It creates an average from 5 previous values
+// It creates an average from previous values
 void calibration_update_keys_limits(uint32_t actual_time_ms) {
     static uint32_t voltage_sum[HALL_SCANNER_TOTAL_CHANNELS] = {0};
     static uint32_t readout_counter = 0; // This holds readout number for average calculation
@@ -72,18 +72,18 @@ void calibration_calculate_and_save(SETTINGS *set) {
         // Tone pressed detection
         if (voltage_delta > CALIBRATION_MINIMAL_DELTA) {
             // Valid calibration
-            set->off_voltage_threshold[t] = (keys_max_voltage[t] + keys_min_voltage[t]) / 2; // In the middle between limits
-            set->on_voltage_threshold[t] = set->off_voltage_threshold[t] + (voltage_delta * SETTINGS_ON_OFF_HYSTERESIS_PERCENTAGE) / 100;
+            set->released_voltage[t] = keys_min_voltage[t];
+            set->pressed_voltage[t] = keys_max_voltage[t];
         }
     }
 
-    printf("  on_voltage_threshold: [");
+    printf("  released_voltage: [");
     for (int i = 0; i < MIDI_NO_TONES; ++i) {
-        printf("%u%s", set->on_voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+        printf("%u%s", set->released_voltage[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
     }
-    printf("  off_voltage_threshold: [");
+    printf("  pressed_voltage: [");
     for (int i = 0; i < MIDI_NO_TONES; ++i) {
-        printf("%u%s", set->off_voltage_threshold[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
+        printf("%u%s", set->pressed_voltage[i], (i < MIDI_NO_TONES-1) ? "," : "]\n");
     }
 
     settings_save(set);
