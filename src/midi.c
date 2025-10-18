@@ -128,14 +128,14 @@ void init_all_key_states(SETTINGS *set) {
     }
 }
 
-// Update single key state - only update velocity buffer during key press
+// Update single key state - capture velocity data during key press motion
 void update_key_state(int channel, uint16_t value) {
     KeyState *ks = &key_states[channel];
     
     KeyPosition old_position = ks->position;
     
     // Determine new position
-    if (value < ks->off_threshold) {
+    if (value > ks->off_threshold) {
         ks->position = KEY_RELEASED;
         // Reset velocity buffer when key is released
         if (old_position != KEY_RELEASED) {
@@ -144,14 +144,15 @@ void update_key_state(int channel, uint16_t value) {
             }
             ks->index = 0;
         }
-    } else if (value > ks->on_threshold) {
+    } else if (value < ks->on_threshold) {
         ks->position = KEY_PRESSED;
     } else {
         ks->position = KEY_UNDEFINED;
     }
     
-    // Only update velocity buffer when key is moving (not released)
-    if (ks->position != KEY_RELEASED) {
+    // Update velocity buffer during key press motion (when moving away from released state)
+    // This captures the velocity data during the entire key press, not just when pressed
+    if (value < ks->released_voltage) {  // Key is being pressed (voltage going down)
         ks->velocity_buffer[ks->index] = value;
         ks->index = (ks->index + 1) % MIDI_VELOCITY_BUFFER_SIZE;
     }
