@@ -171,33 +171,43 @@ void update_all_key_states(void) {
     }
 }
 
-// Calculate velocity based on rate of change (more realistic for velocity)
+// Calculate velocity based on integration of area above released voltage
 uint8_t calculate_velocity(int channel) {
     KeyState *ks = &key_states[channel];
     
-    // Find the maximum rate of change in the buffer
-    uint16_t max_delta = 0;
-    uint16_t total_change = 0;
+    // Calculate the total area between released voltage and current readings
+    uint32_t total_area = 0;
+    uint16_t samples_count = 0;
     
-    for (int i = 1; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
-        int prev_idx = (ks->index - i - 1 + MIDI_VELOCITY_BUFFER_SIZE) % MIDI_VELOCITY_BUFFER_SIZE;
-        int curr_idx = (ks->index - i + MIDI_VELOCITY_BUFFER_SIZE) % MIDI_VELOCITY_BUFFER_SIZE;
-        
-        if (ks->velocity_buffer[curr_idx] > ks->velocity_buffer[prev_idx]) {
-            uint16_t delta = ks->velocity_buffer[curr_idx] - ks->velocity_buffer[prev_idx];
-            if (delta > max_delta) {
-                max_delta = delta;
-            }
-            total_change += delta;
+    // Sum up all values above the released voltage in the buffer
+    for (int i = 0; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
+        if (ks->velocity_buffer[i] > ks->released_voltage) {
+            total_area += (ks->velocity_buffer[i] - ks->released_voltage);
+            samples_count++;
         }
     }
     
-    // Calculate velocity based on the total change and maximum rate
+    // If no samples above released voltage, return minimum velocity
+    if (samples_count == 0) return 1;
+    
+    // Calculate the maximum possible area for normalization
     uint16_t voltage_range = ks->on_threshold - ks->released_voltage;
     if (voltage_range == 0) return 64; // Default velocity
     
-    // Scale to MIDI velocity (1-127)
-    uint32_t velocity = (total_change * 127) / (voltage_range * MIDI_VELOCITY_BUFFER_SIZE);
+    uint32_t max_possible_area = voltage_range * MIDI_VELOCITY_BUFFER_SIZE;
+    
+    // Scale to MIDI velocity (1-127) based on area ratio
+    // Use square root for better velocity curve (more sensitive at lower velocities)
+    uint32_t area_ratio = (total_area * 10000) / max_possible_area; // Scale up for precision
+    uint32_t velocity_squared = (area_ratio * 127 * 127) / 10000;
+    
+    // Simple integer square root approximation
+    uint32_t velocity = 1;
+    while (velocity * velocity < velocity_squared && velocity < 127) {
+        velocity++;
+    }
+    
+    // Ensure velocity is in valid MIDI range
     if (velocity > 127) velocity = 127;
     if (velocity < 1) velocity = 1;
     
