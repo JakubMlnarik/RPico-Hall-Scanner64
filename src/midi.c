@@ -192,11 +192,7 @@ uint8_t calculate_velocity(int channel) {
     if (voltage_range == 0) return 64; // Default velocity if no range
     
     // Normalization approach
-    uint32_t velocity = total_area / voltage_range;
-    
-    // Add debug output
-    printf("Channel %d: total_area=%lu, voltage_range=%d, velocity=%lu\n", 
-           channel, total_area, voltage_range, velocity);
+    float velocity = MIDI_VELOCITY_SCALING_KOEF * total_area / (float)voltage_range;
     
     // Ensure velocity is in valid MIDI range
     if (velocity > 127) velocity = 127;

@@ -11,7 +11,10 @@
 #define MIDI_MA_COUNT 2  // Moving average window size
 
 // Buffer for velocity calculation
-#define MIDI_VELOCITY_BUFFER_SIZE 10
+#define MIDI_VELOCITY_BUFFER_SIZE 15
+
+// Velocity to MIDI scaling factor
+#define MIDI_VELOCITY_SCALING_KOEF 11
 
 // NOTE ON / NOTE OFF hysteresis (in percentage of the total span of analog values)
 #define MIDI_ON_OFF_HYSTERESIS_PERCENTAGE 10
