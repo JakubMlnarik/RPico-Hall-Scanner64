@@ -122,9 +122,12 @@ void init_all_key_states(SETTINGS *set) {
         
         // OFF threshold is in the middle between pressed and released voltage
         ks->off_threshold = (set->pressed_voltage[ch] + set->released_voltage[ch]) / 2;
-        // ON threshold is OFF threshold plus hysteresis
-        uint16_t delta = set->pressed_voltage[ch] - set->released_voltage[ch];
-        ks->on_threshold = ks->off_threshold + (delta * MIDI_ON_OFF_HYSTERESIS_PERCENTAGE) / 100;
+        // ON threshold is OFF threshold plus hysteresis (since pressed voltage is higher)
+        uint16_t delta = set->pressed_voltage[ch] - set->released_voltage[ch]; // pressed > released
+        ks->on_threshold = ks->off_threshold + (delta * MIDI_ON_OFF_HYSTERESIS_PERCENTAGE) / 100; // add hysteresis
+        
+        printf("Key %d: released=%d, pressed=%d, off_thresh=%d, on_thresh=%d\n", 
+               ch, set->released_voltage[ch], set->pressed_voltage[ch], ks->off_threshold, ks->on_threshold);
     }
 }
 
@@ -134,8 +137,8 @@ void update_key_state(int channel, uint16_t value) {
     
     KeyPosition old_position = ks->position;
     
-    // Determine new position
-    if (value > ks->off_threshold) {
+    // Determine new position (pressed voltage is HIGHER than released)
+    if (value < ks->off_threshold) {
         ks->position = KEY_RELEASED;
         // Reset velocity buffer when key is released
         if (old_position != KEY_RELEASED) {
@@ -144,7 +147,7 @@ void update_key_state(int channel, uint16_t value) {
             }
             ks->index = 0;
         }
-    } else if (value < ks->on_threshold) {
+    } else if (value > ks->on_threshold) {
         ks->position = KEY_PRESSED;
     } else {
         ks->position = KEY_UNDEFINED;
@@ -152,7 +155,7 @@ void update_key_state(int channel, uint16_t value) {
     
     // Update velocity buffer during key press motion (when moving away from released state)
     // This captures the velocity data during the entire key press, not just when pressed
-    if (value < ks->released_voltage) {  // Key is being pressed (voltage going down)
+    if (value > ks->released_voltage) {  // Key is being pressed (voltage going UP)
         ks->velocity_buffer[ks->index] = value;
         ks->index = (ks->index + 1) % MIDI_VELOCITY_BUFFER_SIZE;
     }
@@ -172,28 +175,32 @@ void update_all_key_states(void) {
     }
 }
 
-// Calculate velocity based on integration of area below released voltage (inverted)
+// Calculate velocity based on integration of area above released voltage
 uint8_t calculate_velocity(int channel) {
     KeyState *ks = &key_states[channel];
     
     // Calculate the total area between released voltage and current readings
-    // Since pressing the key decreases voltage, we measure area BELOW released voltage
+    // Since pressing the key increases voltage, we measure area ABOVE released voltage
     uint32_t total_area = 0;
     
-    // Sum up all values below the released voltage in the buffer (inverted logic)
+    // Sum up all values above the released voltage in the buffer
     for (int i = 0; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
-        if (ks->velocity_buffer[i] < ks->released_voltage) {
-            total_area += (ks->released_voltage - ks->velocity_buffer[i]);
+        if (ks->velocity_buffer[i] > ks->released_voltage) {
+            total_area += (ks->velocity_buffer[i] - ks->released_voltage);
         }
     }
     
     // Normalize by the actual voltage range for this specific key
-    // This ensures consistent velocity response across all keys regardless of their individual voltage spans
-    uint16_t voltage_range = ks->released_voltage - ks->off_threshold; // Inverted range
+    // Use on_threshold for full range (pressed voltage is higher)
+    uint16_t voltage_range = ks->on_threshold - ks->released_voltage; // pressed > released
     if (voltage_range == 0) return 64; // Default velocity if no range
     
-    // Your original normalization approach - much better!
+    // Normalization approach
     uint32_t velocity = total_area / voltage_range;
+    
+    // Add debug output
+    printf("Channel %d: total_area=%lu, voltage_range=%d, velocity=%lu\n", 
+           channel, total_area, voltage_range, velocity);
     
     // Ensure velocity is in valid MIDI range
     if (velocity > 127) velocity = 127;
