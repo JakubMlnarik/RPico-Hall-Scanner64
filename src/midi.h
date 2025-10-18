@@ -14,7 +14,7 @@
 #define MIDI_VELOCITY_BUFFER_SIZE 10
 
 // NOTE ON / NOTE OFF hysteresis (in percentage of the total span of analog values)
-#define MIDI_ON_OFF_HYSTERESIS_PERCENTAGE 30
+#define MIDI_ON_OFF_HYSTERESIS_PERCENTAGE 10
 
 // MIDI API
 bool midi_send_msg(uint8_t *data, int no_bytes, critical_section_t *cs, queue_t *buff);

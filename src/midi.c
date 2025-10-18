@@ -125,9 +125,6 @@ void init_all_key_states(SETTINGS *set) {
         // ON threshold is OFF threshold plus hysteresis (since pressed voltage is higher)
         uint16_t delta = set->pressed_voltage[ch] - set->released_voltage[ch]; // pressed > released
         ks->on_threshold = ks->off_threshold + (delta * MIDI_ON_OFF_HYSTERESIS_PERCENTAGE) / 100; // add hysteresis
-        
-        printf("Key %d: released=%d, pressed=%d, off_thresh=%d, on_thresh=%d\n", 
-               ch, set->released_voltage[ch], set->pressed_voltage[ch], ks->off_threshold, ks->on_threshold);
     }
 }
 
@@ -153,9 +150,8 @@ void update_key_state(int channel, uint16_t value) {
         ks->position = KEY_UNDEFINED;
     }
     
-    // Update velocity buffer during key press motion (when moving away from released state)
-    // This captures the velocity data during the entire key press, not just when pressed
-    if (value > ks->released_voltage) {  // Key is being pressed (voltage going UP)
+    // Update velocity buffer
+    if (value > ks->released_voltage) {
         ks->velocity_buffer[ks->index] = value;
         ks->index = (ks->index + 1) % MIDI_VELOCITY_BUFFER_SIZE;
     }
@@ -179,14 +175,14 @@ void update_all_key_states(void) {
 uint8_t calculate_velocity(int channel) {
     KeyState *ks = &key_states[channel];
     
-    // Calculate the total area between released voltage and current readings
-    // Since pressing the key increases voltage, we measure area ABOVE released voltage
+    // Calculate the total area between on_threshold voltage and current readings
+    // Since pressing the key increases voltage, we measure area UNDER on_threshold voltage
     uint32_t total_area = 0;
-    
-    // Sum up all values above the released voltage in the buffer
+
+    // Sum up all values under the on_threshold voltage in the buffer
     for (int i = 0; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
-        if (ks->velocity_buffer[i] > ks->released_voltage) {
-            total_area += (ks->velocity_buffer[i] - ks->released_voltage);
+        if (ks->velocity_buffer[i] < ks->on_threshold) {
+            total_area += (ks->on_threshold - ks->velocity_buffer[i]);
         }
     }
     
