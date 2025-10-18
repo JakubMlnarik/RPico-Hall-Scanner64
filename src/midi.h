@@ -7,6 +7,12 @@
 #include "settings.h"
 #include "midi_defs.h"
 
+// filtering of analog values using moving average
+#define MIDI_MA_COUNT 2  // Moving average window size
+
+// Buffer for velocity calculation
+#define MIDI_VELOCITY_BUFFER_SIZE 20
+
 // NOTE ON / NOTE OFF hysteresis (in percentage of the total span of analog values)
 #define MIDI_ON_OFF_HYSTERESIS_PERCENTAGE 10
 

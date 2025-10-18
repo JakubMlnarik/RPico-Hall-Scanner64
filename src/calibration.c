@@ -3,12 +3,12 @@
 // Key limits - this holds dynamically updated max and min voltage for a key
 // Data collected during calibration session
 // When a key is pressed the voltage is HIGHER than the key is released
-uint16_t keys_max_voltage[HALL_SCANNER_TOTAL_CHANNELS];
-uint16_t keys_min_voltage[HALL_SCANNER_TOTAL_CHANNELS];
+uint16_t keys_max_voltage[MIDI_NO_TONES];
+uint16_t keys_min_voltage[MIDI_NO_TONES];
 
 void calibration_init(void) {
     // Max values are getting higher during calibration, so the init value is low
-    for (int i=0; i<HALL_SCANNER_TOTAL_CHANNELS; i++) {
+    for (int i=0; i<MIDI_NO_TONES; i++) {
         keys_max_voltage[i] = CALIBRATION_MAX_INIT_VALUE;
         keys_min_voltage[i] = CALIBRATION_MIN_INIT_VALUE;
     }
@@ -18,23 +18,23 @@ void calibration_init(void) {
 // Every iteration takes cca 100 ms
 // It creates an average from previous values
 void calibration_update_keys_limits(uint32_t actual_time_ms) {
-    static uint32_t voltage_sum[HALL_SCANNER_TOTAL_CHANNELS] = {0};
+    static uint32_t voltage_sum[MIDI_NO_TONES] = {0};
     static uint32_t readout_counter = 0; // This holds readout number for average calculation
     static uint32_t last_event_time = 0;
     
     // Overflow protection - reset counter and voltage sums before overflow
     if (readout_counter >= UINT32_MAX - 1000) {
         readout_counter = 0;
-        for (int ch = 0; ch < HALL_SCANNER_TOTAL_CHANNELS; ch++) {
+        for (int ch = 0; ch < MIDI_NO_TONES; ch++) {
             voltage_sum[ch] = 0;
         }
     }
     
     // Read all sensors into buffer
-    uint16_t curr[HALL_SCANNER_TOTAL_CHANNELS] = {0};
-    hall_scanner_read_all(curr);
+    uint16_t curr[MIDI_NO_TONES] = {0};
+    hall_scanner_read_all(curr, MIDI_NO_TONES);
     
-    for (int ch=0; ch<HALL_SCANNER_TOTAL_CHANNELS; ch++) {
+    for (int ch=0; ch<MIDI_NO_TONES; ch++) {
         voltage_sum[ch] = voltage_sum[ch] + curr[ch];
     }
 
@@ -43,7 +43,7 @@ void calibration_update_keys_limits(uint32_t actual_time_ms) {
     // triggers every SAMPLING_INTERVAL_MS
     if ((actual_time_ms - last_event_time >= CALIBRATION_SAMPLING_INTERVAL_MS) &&
             (readout_counter > CALIBRATION_MINIMAL_SAMPLES_COUNT)) {
-        for (int ch=0; ch<HALL_SCANNER_TOTAL_CHANNELS; ch++) {
+        for (int ch=0; ch<MIDI_NO_TONES; ch++) {
             uint16_t res = (uint16_t)(voltage_sum[ch] / readout_counter);
             // Clear voltage_sum buffer after use
             voltage_sum[ch] = 0;

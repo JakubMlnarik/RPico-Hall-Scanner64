@@ -41,12 +41,12 @@ static uint16_t mcp3008_read_channel(int chip_index, int channel) {
     return result;  // 10-bit value (0-1023)
 }
 
-#include "pico/time.h"
-
-void hall_scanner_read_all(uint16_t *values) {
-    for (uint8_t chip = 0; chip < HALL_SCANNER_NUM_AD_CHIPS; ++chip) {
-        for (uint8_t ch = 0; ch < HALL_SCANNER_CHANNELS_PER_AD_CHIP; ++ch) {
-            values[chip * HALL_SCANNER_CHANNELS_PER_AD_CHIP + ch] = mcp3008_read_channel(chip, ch);
+void hall_scanner_read_all(uint16_t *values, uint8_t count) {
+    uint8_t read_count = 0;
+    for (uint8_t chip = 0; chip < HALL_SCANNER_NUM_AD_CHIPS && read_count < count; ++chip) {
+        for (uint8_t ch = 0; ch < HALL_SCANNER_CHANNELS_PER_AD_CHIP && read_count < count; ++ch) {
+            values[read_count] = mcp3008_read_channel(chip, ch);
+            read_count++;
         }
     }
 }
