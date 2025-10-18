@@ -95,10 +95,11 @@ typedef enum {
 } KeyPosition;
 
 typedef struct {
-    uint16_t buffer[MIDI_VELOCITY_BUFFER_SIZE];
+    uint16_t velocity_buffer[MIDI_VELOCITY_BUFFER_SIZE];
     int index;
     uint16_t on_threshold;
     uint16_t off_threshold;
+    uint16_t released_voltage;
     KeyPosition position;
 } KeyState;
 
@@ -110,7 +111,7 @@ void init_all_key_states(SETTINGS *set) {
     for (int ch = 0; ch < MIDI_NO_TONES; ch++) {
         KeyState *ks = &key_states[ch];
         for (int i = 0; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
-            ks->buffer[i] = 0;
+            ks->velocity_buffer[i] = 0;
         }
         ks->index = 0;
         ks->position = KEY_RELEASED;
@@ -119,14 +120,15 @@ void init_all_key_states(SETTINGS *set) {
         // ON threshold is OFF threshold plus hysteresis
         uint16_t delta = set->pressed_voltage[ch] - set->released_voltage[ch];
         ks->on_threshold = ks->off_threshold + (delta * MIDI_ON_OFF_HYSTERESIS_PERCENTAGE) / 100;
+        ks->released_voltage = set->released_voltage[ch];
     }
 }
 
 // Update single key state
 void update_key_state(int channel, uint16_t value) {
     KeyState *ks = &key_states[channel];
-    // Update buffer
-    ks->buffer[ks->index] = value;
+    // Update velocity buffer
+    ks->velocity_buffer[ks->index] = value;
     ks->index = (ks->index + 1) % MIDI_VELOCITY_BUFFER_SIZE;
     if (value < ks->off_threshold) {
         ks->position = KEY_RELEASED;
@@ -154,11 +156,14 @@ void update_all_key_states(void) {
 // Calculate velocity for a key
 uint32_t calculate_velocity(int channel) {
     KeyState *ks = &key_states[channel];
-    uint32_t vel = 0;
+    uint32_t sum = 0;
     for (int i = 0; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
-        vel += ks->buffer[i];
+        sum += ks->off_threshold - ks->velocity_buffer[i];
     }
-    return vel;
+    if (ks->off_threshold <= ks->released_voltage) {
+        return 0; // Avoid division by zero or negative velocity
+    }
+    return sum / (ks->off_threshold - ks->released_voltage);
 }
 
 //-- Process MIDI messages --
