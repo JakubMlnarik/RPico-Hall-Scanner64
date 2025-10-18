@@ -110,32 +110,50 @@ static KeyState key_states[MIDI_NO_TONES];
 void init_all_key_states(SETTINGS *set) {
     for (int ch = 0; ch < MIDI_NO_TONES; ch++) {
         KeyState *ks = &key_states[ch];
+        
+        // Initialize velocity buffer with released voltage instead of zeros
         for (int i = 0; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
-            ks->velocity_buffer[i] = 0;
+            ks->velocity_buffer[i] = set->released_voltage[ch];
         }
+        
         ks->index = 0;
         ks->position = KEY_RELEASED;
+        ks->released_voltage = set->released_voltage[ch];
+        
         // OFF threshold is in the middle between pressed and released voltage
         ks->off_threshold = (set->pressed_voltage[ch] + set->released_voltage[ch]) / 2;
         // ON threshold is OFF threshold plus hysteresis
         uint16_t delta = set->pressed_voltage[ch] - set->released_voltage[ch];
         ks->on_threshold = ks->off_threshold + (delta * MIDI_ON_OFF_HYSTERESIS_PERCENTAGE) / 100;
-        ks->released_voltage = set->released_voltage[ch];
     }
 }
 
-// Update single key state
+// Update single key state - only update velocity buffer during key press
 void update_key_state(int channel, uint16_t value) {
     KeyState *ks = &key_states[channel];
-    // Update velocity buffer
-    ks->velocity_buffer[ks->index] = value;
-    ks->index = (ks->index + 1) % MIDI_VELOCITY_BUFFER_SIZE;
+    
+    KeyPosition old_position = ks->position;
+    
+    // Determine new position
     if (value < ks->off_threshold) {
         ks->position = KEY_RELEASED;
+        // Reset velocity buffer when key is released
+        if (old_position != KEY_RELEASED) {
+            for (int i = 0; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
+                ks->velocity_buffer[i] = ks->released_voltage;
+            }
+            ks->index = 0;
+        }
     } else if (value > ks->on_threshold) {
         ks->position = KEY_PRESSED;
     } else {
         ks->position = KEY_UNDEFINED;
+    }
+    
+    // Only update velocity buffer when key is moving (not released)
+    if (ks->position != KEY_RELEASED) {
+        ks->velocity_buffer[ks->index] = value;
+        ks->index = (ks->index + 1) % MIDI_VELOCITY_BUFFER_SIZE;
     }
 }
 
@@ -153,19 +171,37 @@ void update_all_key_states(void) {
     }
 }
 
-// Calculate velocity for a key
-uint32_t calculate_velocity(int channel) {
+// Calculate velocity based on rate of change (more realistic for velocity)
+uint8_t calculate_velocity(int channel) {
     KeyState *ks = &key_states[channel];
-    uint32_t sum = 0;
-    for (int i = 0; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
-        if (ks->off_threshold > ks->velocity_buffer[i]) {
-            sum += ks->off_threshold - ks->velocity_buffer[i];
+    
+    // Find the maximum rate of change in the buffer
+    uint16_t max_delta = 0;
+    uint16_t total_change = 0;
+    
+    for (int i = 1; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
+        int prev_idx = (ks->index - i - 1 + MIDI_VELOCITY_BUFFER_SIZE) % MIDI_VELOCITY_BUFFER_SIZE;
+        int curr_idx = (ks->index - i + MIDI_VELOCITY_BUFFER_SIZE) % MIDI_VELOCITY_BUFFER_SIZE;
+        
+        if (ks->velocity_buffer[curr_idx] > ks->velocity_buffer[prev_idx]) {
+            uint16_t delta = ks->velocity_buffer[curr_idx] - ks->velocity_buffer[prev_idx];
+            if (delta > max_delta) {
+                max_delta = delta;
+            }
+            total_change += delta;
         }
     }
-    if (ks->off_threshold <= ks->released_voltage) {
-        return 0; // Avoid division by zero or negative velocity
-    }
-    return sum / (ks->off_threshold - ks->released_voltage);
+    
+    // Calculate velocity based on the total change and maximum rate
+    uint16_t voltage_range = ks->on_threshold - ks->released_voltage;
+    if (voltage_range == 0) return 64; // Default velocity
+    
+    // Scale to MIDI velocity (1-127)
+    uint32_t velocity = (total_change * 127) / (voltage_range * MIDI_VELOCITY_BUFFER_SIZE);
+    if (velocity > 127) velocity = 127;
+    if (velocity < 1) velocity = 1;
+    
+    return (uint8_t)velocity;
 }
 
 //-- Process MIDI messages --
@@ -181,11 +217,10 @@ void midi_process(SETTINGS *set, critical_section_t *cs, queue_t *buff) {
 
         for (int i = 0; i < MIDI_NO_TONES; ++i) {
             if (key_states[i].position == KEY_PRESSED && note_on_sent[i] == false) {
-                printf("NOTE ON: %d\n", i);
-                midi_send_note_on(set->m_ch, set->m_base, i, 127, cs, buff);
+                uint8_t velocity = calculate_velocity(i);
+                printf("NOTE ON: %d, Velocity: %d\n", i, velocity);
+                midi_send_note_on(set->m_ch, set->m_base, i, velocity, cs, buff);
                 note_on_sent[i] = true;
-
-                printf("Velocity integral: %d\n", calculate_velocity(i));
             } else if (key_states[i].position == KEY_RELEASED && note_on_sent[i] == true) {
                 printf("NOTE OFF: %d\n", i);
                 midi_send_note_off(set->m_ch, set->m_base, i, cs, buff);
