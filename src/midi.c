@@ -158,7 +158,9 @@ uint32_t calculate_velocity(int channel) {
     KeyState *ks = &key_states[channel];
     uint32_t sum = 0;
     for (int i = 0; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
-        sum += ks->off_threshold - ks->velocity_buffer[i];
+        if (ks->off_threshold > ks->velocity_buffer[i]) {
+            sum += ks->off_threshold - ks->velocity_buffer[i];
+        }
     }
     if (ks->off_threshold <= ks->released_voltage) {
         return 0; // Avoid division by zero or negative velocity
