@@ -42,11 +42,19 @@ static uint16_t mcp3008_read_channel(int chip_index, int channel) {
 }
 
 void hall_scanner_read_all(uint16_t *values, uint8_t count) {
+    static uint32_t call_counter = 0;
     uint8_t read_count = 0;
     for (uint8_t chip = 0; chip < HALL_SCANNER_NUM_AD_CHIPS && read_count < count; ++chip) {
         for (uint8_t ch = 0; ch < HALL_SCANNER_CHANNELS_PER_AD_CHIP && read_count < count; ++ch) {
             values[read_count] = mcp3008_read_channel(chip, ch);
             read_count++;
+        }
+    }
+    
+    call_counter++;
+    if (call_counter % 100 == 0) {
+        for (uint8_t i = 0; i < read_count; ++i) {
+            printf("  [%u] = %u\n", i, values[i]);
         }
     }
 }
