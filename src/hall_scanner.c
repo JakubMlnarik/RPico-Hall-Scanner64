@@ -53,8 +53,10 @@ void hall_scanner_read_all(uint16_t *values, uint8_t count) {
     
     call_counter++;
     if (call_counter % 100 == 0) {
+        printf("Values: ");
         for (uint8_t i = 0; i < read_count; ++i) {
-            printf("  [%u] = %u\n", i, values[i]);
+            printf("[%u]=%u ", i, values[i]);
         }
+        printf("\n");
     }
 }
