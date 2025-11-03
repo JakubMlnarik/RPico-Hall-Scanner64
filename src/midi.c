@@ -120,8 +120,8 @@ void init_all_key_states(SETTINGS *set) {
         ks->position = KEY_RELEASED;
         ks->released_voltage = set->released_voltage[ch];
         
-        // OFF threshold is in the middle between pressed and released voltage
-        ks->off_threshold = (set->pressed_voltage[ch] + set->released_voltage[ch]) / 2;
+        // OFF threshold in between pressed and released voltage - not directly in the middle - closer to pressed voltage
+        ks->off_threshold = (3*set->pressed_voltage[ch] + 2*set->released_voltage[ch]) / 5;
         // ON threshold is OFF threshold plus hysteresis (since pressed voltage is higher)
         uint16_t delta = set->pressed_voltage[ch] - set->released_voltage[ch]; // pressed > released
         ks->on_threshold = ks->off_threshold + (delta * MIDI_ON_OFF_HYSTERESIS_PERCENTAGE) / 100; // add hysteresis
@@ -140,7 +140,7 @@ void update_key_state(int channel, uint16_t value) {
         // Reset velocity buffer when key is released
         if (old_position != KEY_RELEASED) {
             for (int i = 0; i < MIDI_VELOCITY_BUFFER_SIZE; i++) {
-                ks->velocity_buffer[i] = ks->released_voltage;
+                ks->velocity_buffer[i] = ks->off_threshold;
             }
             ks->index = 0;
         }
